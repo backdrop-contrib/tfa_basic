@@ -212,6 +212,7 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupPluginInterface {
       '#type' => 'textfield',
       '#value' => $this->seed,
       '#disabled' => TRUE,
+      '#allow_focus' => TRUE,
       '#description' => t('Enter this code into your two-factor authentication app or scan the QR code below.'),
     );
     // QR image of seed.
