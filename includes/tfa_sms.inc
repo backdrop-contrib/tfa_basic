@@ -137,11 +137,10 @@ class TfaBasicSms extends TfaBasePlugin implements TfaValidationPluginInterface,
       return TRUE;
     }
     catch (Services_Twilio_RestException $e) {
-      // @todo Consider more detailed reporting by mapping Twilio error codes to
-      // messages.
-      watchdog('tfa_basic', 'Twilio send message error to user !uid @code @link', array(
+      watchdog('tfa_basic', 'Twilio send message error to user !uid. Status code: @code, message: @message, link: @link', array(
         '!uid' => $this->context['uid'],
         '@code' => $e->getStatus(),
+        '@message' => $e->getMessage(),
         '@link' => $e->getInfo(),
         ), WATCHDOG_ERROR);
       return FALSE;
