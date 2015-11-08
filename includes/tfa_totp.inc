@@ -198,7 +198,7 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupPluginInterface {
       l('Authy (Android/iPhone)', 'https://www.authy.com/thefuture#install-now', array('attributes' => array('target'=>'_blank'))),
       l('Authenticator (Windows Phone)', 'http://www.windowsphone.com/en-us/store/app/authenticator/021dd79f-0598-e011-986b-78e7d1fa76f8', array('attributes' => array('target'=>'_blank'))),
       l('FreeOTP (Android)', 'https://play.google.com/store/apps/details?id=org.fedorahosted.freeotp', array('attributes' => array('target'=>'_blank'))),
-      l('GAuth Authenticator (desktop)', 'https://github.com/gbraad/html5-google-authenticator', array('attributes' => array('target'=>'_blank')))
+      l('GAuth Authenticator (Firefox OS, desktop, others)', 'https://github.com/gbraad/gauth', array('attributes' => array('target'=>'_blank')))
     );
     $form['apps'] = array(
       '#type' => 'markup',
