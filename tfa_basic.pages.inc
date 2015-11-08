@@ -101,23 +101,31 @@ function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tf
           '#value' => t('Receive verification code via SMS.'),
         ),
       );
-      $mobile_number = tfa_basic_get_mobile_number($account);
-      if (!empty($user_tfa['data']['sms']) && $mobile_number !== FALSE) {
-        $output['number'] = array(
+      if (tfa_basic_get_twilio_client() !== FALSE) {
+        $mobile_number = tfa_basic_get_mobile_number($account);
+        if (!empty($user_tfa['data']['sms']) && $mobile_number !== FALSE) {
+          $output['number'] = array(
+            '#type' => 'markup',
+            '#markup' => '<p>' . t('Deliver to @number', array('@number' => tfa_basic_format_number($mobile_number))) . '</p>',
+          );
+        }
+        if (empty($user_tfa['data']['sms'])) {
+          $sms_text = t('Set up SMS delivery');
+        }
+        else {
+          $sms_text = t('Reset SMS delivery');
+        }
+        $output['link'] = array(
           '#type' => 'markup',
-          '#markup' => '<p>' . t('Deliver to @number', array('@number' => tfa_basic_format_number($mobile_number))) . '</p>',
+          '#markup' => l($sms_text, 'user/' . $account->uid . '/security/tfa/sms-setup'),
         );
       }
-      if (empty($user_tfa['data']['sms'])) {
-        $sms_text = t('Set up SMS delivery');
-      }
       else {
-        $sms_text = t('Reset SMS delivery');
+        $output['number'] = array(
+          '#type' => 'markup',
+          '#markup' => '<p><em>' . t('Not available for use') . '</em></p>',
+        );
       }
-      $output['link'] = array(
-        '#type' => 'markup',
-        '#markup' => l($sms_text, 'user/' . $account->uid . '/security/tfa/sms-setup'),
-      );
       break;
 
     case 'tfa_basic_trusted_browser':
@@ -570,7 +578,8 @@ function tfa_basic_setup_form_submit($form, &$form_state) {
     // Send code to number.
     $form_state['storage']['sms_number'] = $form_state['values']['sms_number'];
     $context = array('uid' => $account->uid, 'mobile_number' => $form_state['storage']['sms_number']);
-    $setup_plugin = new TfaBasicSmsSetup($context, $form_state['storage']['sms_number']);
+    $client = tfa_basic_get_twilio_client();
+    $setup_plugin = new TfaBasicSmsSetup($context, $form_state['storage']['sms_number'], $client);
     $tfa_setup = new TfaSetup($setup_plugin, $context);
     $tfa_setup->begin();
     $errors = $tfa_setup->getErrorMessages();

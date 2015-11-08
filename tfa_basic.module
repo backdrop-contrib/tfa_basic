@@ -29,6 +29,25 @@ function tfa_basic_library() {
 }
 
 /**
+ * Implements hook_libraries_info().
+ */
+function tfa_basic_libraries_info() {
+  $libraries['twilio'] = array(
+    'name' => 'Twilio library',
+    'vendor url' => 'http://www.twilio.com',
+    'download url' => 'https://github.com/twilio/twilio-php/tarball/latest',
+    'path' => 'Services',
+    'version' => '2010-04-01',
+    'files' => array(
+      'php' => array(
+        'Twilio.php',
+      ),
+    ),
+  );
+  return $libraries;
+}
+
+/**
  * Implements hook_menu().
  */
 function tfa_basic_menu() {
@@ -203,7 +222,25 @@ function tfa_basic_recovery_code_create($context) {
 function tfa_basic_sms_create($context) {
   $account = user_load($context['uid']);
   $number = tfa_basic_get_mobile_number($account);
-  return new TfaBasicSms($context, $number);
+  $client = tfa_basic_get_twilio_client();
+  return new TfaBasicSms($context, $number, $client);
+}
+
+/**
+ * Get a Twilio services client.
+ *
+ * @return Services_Twilio|FALSE
+ */
+function tfa_basic_get_twilio_client() {
+  if (module_exists('libraries') && $library = libraries_load('twilio') && !empty($library['loaded'])) {
+    // Library should be loaded.
+  }
+  if (!class_exists('Services_Twilio')) {
+    return FALSE;
+  }
+  $sid = variable_get('tfa_basic_twilio_account_sid', '');
+  $token = variable_get('tfa_basic_twilio_account_token', '');
+  return new Services_Twilio($sid, $token);
 }
 
 /**
@@ -497,6 +534,7 @@ function tfa_basic_format_number($number) {
  */
 function tfa_basic_form_tfa_admin_settings_alter(&$form, &$form_state, $form_id) {
   global $cookie_domain;
+  $twilio_available = FALSE;
 
   $form['required_tfa_roles'] = array(
     '#type' => 'checkboxes',
@@ -518,8 +556,14 @@ function tfa_basic_form_tfa_admin_settings_alter(&$form, &$form_state, $form_id)
       )
     ),
   );
-  // Add Twilio configuration if SMS plugin is enabled.
-  if (class_exists('Services_Twilio')) {
+  // Add Twilio configuration if Twilio PHP library is available.
+  if (module_exists('libraries') && $library = libraries_load('twilio') && !empty($library['loaded'])) {
+    $twilio_available = TRUE;
+  }
+  elseif (class_exists('Services_Twilio')) {
+    $twilio_available = TRUE;
+  }
+  if ($twilio_available) {
     $sms_states = array(
       'visible' => array(
         array(

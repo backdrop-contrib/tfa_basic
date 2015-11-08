@@ -76,13 +76,22 @@ Prerequisites:
 
 ### Installing Twilio PHP library
 
-TFA SMS plugin requires the Twilio PHP library for sending SMS codes. To install
-the library clone it from github on the command line:
+TFA SMS plugin requires the Twilio PHP library for sending SMS codes. You can
+install the Twilio PHP library manually or via the Drupal Libraries API.
+
+Option 1, install Twilio PHP manually:
 
   cd tfa_basic/includes/
   git clone https://github.com/twilio/twilio-php.git
 
 Such that the file tfa_basic/includes/twilio-php/Services/Twilio.php exists.
+
+Option 2, install via Drupal Libraries API:
+
+ 1. Install Drupal Libraries API: https://www.drupal.org/project/libraries
+ 2. Download the Twilio PHP library from (http://www.twilio.com/docs/libraries).
+ 3. Extract the library in your sites/all/libraries folder and rename the
+    directory to 'twilio'.
 
 ### Account mobile phone numbers
 
