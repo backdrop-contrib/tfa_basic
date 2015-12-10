@@ -54,7 +54,9 @@ class TfaTrustedBrowser extends TfaBasePlugin implements TfaLoginPluginInterface
   public function getForm(array $form, array &$form_state) {
     $form['trust_browser'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Remember this browser?'),
+      '#title' => t('Remember this browser for @interval?', array(
+        '@interval' => format_interval($this->expiration),
+      )),
       '#description' => t('Not recommended if you are on a public or shared computer.'),
     );
     return $form;
