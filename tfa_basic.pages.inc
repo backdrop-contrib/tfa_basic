@@ -133,15 +133,15 @@ function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tf
       $trusted_browsers = array();
       foreach ($trusted_browser->getTrustedBrowsers() as $device) {
         $vars = array(
-          '!set' => format_date($device['created']),
+          '!expiration' => format_date($device['created'] + variable_get('tfa_basic_trust_cookie_expiration', 3600 * 24 * 30)),
           '@browser' => $device['name'],
           '!time' => format_date($device['last_used']),
         );
         if (empty($device['last_used'])) {
-          $message = t('@browser, set !set', $vars);
+          $message = t('@browser, expires !expiration', $vars);
         }
         else {
-          $message = t('@browser, set !set, last used !time', $vars);
+          $message = t('@browser, expires !expiration, last used !time', $vars);
         }
         $trusted_browsers[] = $message;
       }

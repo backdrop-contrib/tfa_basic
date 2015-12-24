@@ -253,7 +253,7 @@ class TfaTrustedBrowserSetup extends TfaTrustedBrowser implements TfaSetupPlugin
       );
       foreach ($existing as $browser) {
         $vars = array(
-          '!set' => format_date($browser['created']),
+          '!expiration' => format_date($browser['created'] + variable_get('tfa_basic_trust_cookie_expiration', 3600 * 24 * 30)),
           '!time' => format_date($browser['last_used']),
         );
         if ($current_trusted == $browser['id']) {
@@ -263,10 +263,10 @@ class TfaTrustedBrowserSetup extends TfaTrustedBrowser implements TfaSetupPlugin
           $name = check_plain($browser['name']);
         }
         if (empty($browser['last_used'])) {
-          $message = t('Marked trusted !set', $vars);
+          $message = t('Expires !expiration', $vars);
         }
         else {
-          $message = t('Marked trusted !set, last used for log in !time', $vars);
+          $message = t('Expires !expiration, last used for log in !time', $vars);
         }
         $form['existing']['trusted_browser_' . $browser['id']] = array(
           '#type' => 'checkbox',
