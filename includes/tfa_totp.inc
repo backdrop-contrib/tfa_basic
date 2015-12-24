@@ -293,7 +293,7 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupPluginInterface {
    * @return string Seed.
    */
   protected function createSeed() {
-    return $this->ga->createSecret(20);
+    return $this->ga->createSecret(24);
   }
 
   /**
