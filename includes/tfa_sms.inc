@@ -45,6 +45,9 @@ class TfaBasicSms extends TfaBasePlugin implements TfaValidationPluginInterface,
       '#required' => TRUE,
       '#description' => t('Enter @length-character code sent to your device.', array('@length' => $this->codeLength)),
     );
+    if (module_exists('elements')) {
+      $form['code']['#type'] = 'numberfield';
+    }
     $form['actions']['#type'] = 'actions';
     // @todo optionally report on when code was sent/delivered.
     $form['actions']['login'] = array(
@@ -176,6 +179,9 @@ class TfaBasicSmsSetup extends TfaBasicSms implements TfaSetupPluginInterface {
       '#required' => TRUE,
       '#description' => t('Enter @length-character code sent to your device.', array('@length' => $this->codeLength)),
     );
+    if (module_exists('elements')) {
+      $form['sms_code']['#type'] = 'numberfield';
+    }
     $form['actions']['verify'] = array(
       '#type' => 'submit',
       '#value' => t('Verify and save'),

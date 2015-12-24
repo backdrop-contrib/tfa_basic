@@ -55,6 +55,9 @@ class TfaTotp extends TfaBasePlugin implements TfaValidationPluginInterface {
       '#required' => TRUE,
       '#attributes' => array('autocomplete' => 'off'),
     );
+    if (module_exists('elements')) {
+      $form['code']['#type'] = 'numberfield';
+    }
     $form['actions']['#type'] = 'actions';
     $form['actions']['login'] = array(
       '#type' => 'submit',
