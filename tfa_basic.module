@@ -616,7 +616,7 @@ function tfa_basic_form_tfa_admin_settings_alter(&$form, &$form_state, $form_id)
       $form['tfa_basic_phone_field'] = array(
         '#title' => t('SMS mobile number'),
         '#type' => 'container',
-        '#children'  => t('<div class="error messages">A mobile number account field is required to use the Twilio SMS plugin. Consult the <a href="!url">help documentation for more info</a>.</div>', array('!url' => url('admin/help/tfa'))),
+        '#children'  => t('<div class="error messages">An account field for mobile number storage is required to use the Twilio SMS plugin. Consult TFA Basic README.txt for more info.</div>'),
         '#states' => $sms_states
       );
 
