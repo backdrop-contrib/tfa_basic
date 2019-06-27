@@ -17,7 +17,7 @@ class TfaBasicRecoveryCode extends TfaBasePlugin implements TfaValidationPluginI
   public function __construct(array $context) {
     parent::__construct($context);
     // Set in settings.php.
-    $this->encryptionKey = variable_get('tfa_basic_secret_key', drupal_get_private_key());
+    $this->encryptionKey = settings_get('tfa_basic_secret_key', drupal_get_private_key());
   }
 
   /**

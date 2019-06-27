@@ -33,7 +33,7 @@ class TfaTotp extends TfaBasePlugin implements TfaValidationPluginInterface {
     // Allow codes within tolerance range of 3 * 30 second units.
     $this->timeSkew = variable_get('tfa_basic_time_skew', 3);
     // Recommended: set variable tfa_totp_secret_key in settings.php.
-    $this->encryptionKey = variable_get('tfa_basic_secret_key', drupal_get_private_key());
+    $this->encryptionKey = settings_get('tfa_basic_secret_key', drupal_get_private_key());
     $this->alreadyAccepted = FALSE;
   }
 

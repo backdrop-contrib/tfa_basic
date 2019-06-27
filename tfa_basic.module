@@ -48,6 +48,25 @@ function tfa_basic_libraries_info() {
 }
 
 /**
+ * Implements hook_autoload_info().
+ */
+function tfa_basic_autoload_info() {
+  return array(
+    'TfaTotp' => 'includes/tfa_totp.inc',
+    'TfaTotpSetup' => 'includes/tfa_totp.inc',
+    'TfaTrustedBrowser' => 'includes/tfa_trusted_browser.inc',
+    'TfaTrustedBrowserSetup' => 'includes/tfa_trusted_browser.inc',
+    'TfaBasicRecoveryCode' => 'includes/tfa_recovery.inc',
+    'TfaBasicRecoveryCodeSetup' => 'includes/tfa_recovery.inc',
+    'TfaBasicSms' => 'includes/tfa_sms.inc',
+    'TfaBasicSmsSetup' => 'includes/tfa_sms.inc',
+    'TfaBasicHelp' => 'includes/tfa_help.inc',
+    'PHPGangsta_GoogleAuthenticator' => 'includes/googleauthenticator/GoogleAuthenticator.php',
+    //'' => 'includes/twilio-php/Services/Twilio.php',
+  );
+}
+
+/**
  * Implements hook_menu().
  */
 function tfa_basic_menu() {

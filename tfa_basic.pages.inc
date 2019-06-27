@@ -285,7 +285,7 @@ function tfa_basic_disable_form_validate($form, &$form_state) {
     $account = $user;
   }
   // Check password. (from user.module user_validate_current_pass()).
-  require_once DRUPAL_ROOT . '/' . variable_get('password_inc', 'includes/password.inc');
+  require_once DRUPAL_ROOT . '/' . variable_get('password_inc', 'core/includes/password.inc');
   $current_pass = user_check_password($form_state['values']['current_pass'], $account);
   if (!$current_pass) {
     form_set_error('current_pass', t("Incorrect password."));
@@ -521,7 +521,7 @@ function tfa_basic_setup_form_validate($form, &$form_state) {
       $account = $user;
     }
     // Check password. (from user.module user_validate_current_pass()).
-    require_once DRUPAL_ROOT . '/' . variable_get('password_inc', 'includes/password.inc');
+    require_once DRUPAL_ROOT . '/' . variable_get('password_inc', 'core/includes/password.inc');
     $current_pass = user_check_password($form_state['values']['current_pass'], $account);
     if (!$current_pass) {
       form_set_error('current_pass', t("Incorrect password."));
