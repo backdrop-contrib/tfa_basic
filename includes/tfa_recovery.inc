@@ -17,7 +17,7 @@ class TfaBasicRecoveryCode extends TfaBasePlugin implements TfaValidationPluginI
   public function __construct(array $context) {
     parent::__construct($context);
     // Set in settings.php.
-    $this->encryptionKey = settings_get('tfa_basic_secret_key', drupal_get_private_key());
+    $this->encryptionKey = settings_get('tfa_basic_secret_key', backdrop_get_private_key());
   }
 
   /**
@@ -217,7 +217,7 @@ class TfaBasicRecoveryCodeSetup extends TfaBasicRecoveryCode implements TfaSetup
   protected function generateBlock($length) {
     $block = '';
     do {
-      $block .= ord(drupal_random_bytes(1));
+      $block .= ord(backdrop_random_bytes(1));
     } while (strlen($block) <= $length);
 
     return substr($block, 0, $length);
@@ -255,7 +255,7 @@ class TfaBasicRecoveryCodeSetup extends TfaBasicRecoveryCode implements TfaSetup
         'code' => base64_encode($encrypted),
         'created' => REQUEST_TIME
       );
-      drupal_write_record('tfa_recovery_code', $record);
+      backdrop_write_record('tfa_recovery_code', $record);
     }
 
     $message = 'Saved recovery codes for user !uid';

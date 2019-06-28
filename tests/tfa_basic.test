@@ -2,13 +2,13 @@
 
 /**
  * @file tfa_basic.test.
- * Drupal test cases for TFA basic plugins.
+ * Backdrop test cases for TFA basic plugins.
  */
 
 /**
  * Tests the functionality of the TFA basic plugins.
  */
-class TfaBasicTestCase extends DrupalWebTestCase {
+class TfaBasicTestCase extends BackdropWebTestCase {
 
   /**
    * @var PHPGangsta_GoogleAuthenticator
@@ -47,10 +47,10 @@ class TfaBasicTestCase extends DrupalWebTestCase {
     // Enable TFA module and the test module.
     parent::setUp('tfa', 'tfa_basic');
     // Use PHPGangsta_GoogleAuthenticator to create codes for TOTP seed.
-    require_once drupal_get_path('module', 'tfa_basic') . '/includes/googleauthenticator/GoogleAuthenticator.php';
+    require_once backdrop_get_path('module', 'tfa_basic') . '/includes/googleauthenticator/GoogleAuthenticator.php';
     $this->ga = new PHPGangsta_GoogleAuthenticator();
-    $this->web_user = $this->drupalCreateUser(array('access content', 'setup own tfa'));
-    $this->admin_user = $this->drupalCreateUser(array('access content', 'administer users'));
+    $this->web_user = $this->backdropCreateUser(array('access content', 'setup own tfa'));
+    $this->admin_user = $this->backdropCreateUser(array('access content', 'administer users'));
   }
 
   public function testTfaBasic() {
@@ -63,32 +63,32 @@ class TfaBasicTestCase extends DrupalWebTestCase {
     variable_set('tfa_enabled', FALSE);
 
     $account = $this->web_user;
-    $this->drupalLogin($account);
+    $this->backdropLogin($account);
 
     // Enable TFA and begin configuration.
     variable_set('tfa_enabled', TRUE);
     variable_set('tfa_validate_plugin', 'tfa_basic_totp');
     variable_set('tfa_fallback_plugins', array('tfa_basic_recovery_code'));
 
-    $this->drupalGet('user/' . $account->uid . '/security/tfa');
+    $this->backdropGet('user/' . $account->uid . '/security/tfa');
 
     $this->assertLink($this->uiStrings('setup-app'));
 
     // Set up application.
-    $this->drupalGet('user/' . $account->uid . '/security/tfa/app-setup');
+    $this->backdropGet('user/' . $account->uid . '/security/tfa/app-setup');
 
     $this->assertText($this->uiStrings('password-request'));
     // Test incorrect password.
     $edit = array(
       'current_pass' => $this->randomName(),
     );
-    $this->drupalPost(NULL, $edit, 'Confirm');
+    $this->backdropPost(NULL, $edit, 'Confirm');
     $this->assertText($this->uiStrings('pass-error'));
 
     $edit = array(
       'current_pass' => $account->pass_raw,
     );
-    $this->drupalPost(NULL, $edit, 'Confirm');
+    $this->backdropPost(NULL, $edit, 'Confirm');
 
     $this->assertText($this->uiStrings('app-step1'));
     $this->assertFieldById('edit-seed', '', 'Seed input appears');
@@ -107,14 +107,14 @@ class TfaBasicTestCase extends DrupalWebTestCase {
     $edit = array(
       'code' => $this->randomName(),
     );
-    $this->drupalPost(NULL, $edit, 'Verify and save');
+    $this->backdropPost(NULL, $edit, 'Verify and save');
     $this->assertText($this->uiStrings('invalid-code-retry'));
 
     // Submit valid code.
     $edit = array(
       'code' => $this->ga->getCode($this->seed),
     );
-    $this->drupalPost(NULL, $edit, 'Verify and save');
+    $this->backdropPost(NULL, $edit, 'Verify and save');
 
     // Setup recovery codes.
     $this->assertText($this->uiStrings('set-recovery-codes'));
@@ -124,18 +124,18 @@ class TfaBasicTestCase extends DrupalWebTestCase {
     while (list(, $node) = each($result)) {
       $this->recoveryCodes[] = (string) $node;
     }
-    $this->drupalPost(NULL, array(), 'Save');
+    $this->backdropPost(NULL, array(), 'Save');
     $this->assertText($this->uiStrings('setup-complete'));
 
     // Logout to test TFA app process.
-    $this->drupalGet('user/logout');
+    $this->backdropGet('user/logout');
 
     $edit = array(
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    // Do not use drupalLogin() since it tests for actual login.
-    $this->drupalPost('user/login', $edit, 'Log in');
+    // Do not use backdropLogin() since it tests for actual login.
+    $this->backdropPost('user/login', $edit, 'Log in');
     // Get login hash. Could user tfa_login_hash() but would require reloading
     // account.
     $url_parts = explode('/', $this->url);
@@ -145,78 +145,78 @@ class TfaBasicTestCase extends DrupalWebTestCase {
     $edit = array(
       'code' => $this->randomName(),
     );
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Verify');
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Verify');
     $this->assertText($this->uiStrings('invalid-code-retry'));
 
     // Submit valid code.
     $edit = array(
       'code' => $this->ga->getCode($this->seed),
     );
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Verify');
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Verify');
     $this->assertText('My account');
 
     // Logout to test recovery code process.
-    $this->drupalGet('user/logout');
+    $this->backdropGet('user/logout');
 
     $edit = array(
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    $this->drupalPost('user/login', $edit, 'Log in');
+    $this->backdropPost('user/login', $edit, 'Log in');
     $url_parts = explode('/', $this->url);
     $login_hash = array_pop($url_parts);
 
     // Begin fallback.
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, array(), $this->uiStrings('fallback-button'));
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, array(), $this->uiStrings('fallback-button'));
     $this->assertText($this->uiStrings('recovery-prompt'));
 
     // Try invalid code.
     $edit = array(
       'recover' => $this->randomName(),
     );
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Verify');
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Verify');
     $this->assertText($this->uiStrings('invalid-recovery-code'));
 
     // Submit valid code.
     $edit = array(
       'recover' => array_pop($this->recoveryCodes),
     );
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Verify');
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Verify');
     $this->assertText('My account');
   }
 
   public function _testAdminDisable() {
-    $this->drupalLogin($this->admin_user);
+    $this->backdropLogin($this->admin_user);
 
-    $this->drupalGet('user/' . $this->web_user->uid . '/security/tfa');
+    $this->backdropGet('user/' . $this->web_user->uid . '/security/tfa');
     $this->assertText($this->web_user->name, 'Account name appears');
     $this->assertText($this->uiStrings('tfa-status-enabled'));
     $this->assertLink($this->uiStrings('tfa-disable'));
 
-    $this->drupalGet('user/' . $this->web_user->uid . '/security/tfa/disable');
+    $this->backdropGet('user/' . $this->web_user->uid . '/security/tfa/disable');
     $this->assertText($this->uiStrings('tfa-disable-confirm'));
     $edit = array(
       'current_pass' => $this->admin_user->pass_raw,
     );
-    $this->drupalPost('user/' . $this->web_user->uid . '/security/tfa/disable', $edit, 'Disable');
+    $this->backdropPost('user/' . $this->web_user->uid . '/security/tfa/disable', $edit, 'Disable');
     $this->assertText($this->uiStrings('tfa-disabled'));
   }
 
   public function testTotpReplay() {
     variable_set('tfa_enabled', TRUE);
     variable_set('tfa_validate_plugin', 'tfa_basic_totp');
-    $account = $this->drupalCreateUser(array('access content', 'setup own tfa'));
+    $account = $this->backdropCreateUser(array('access content', 'setup own tfa'));
     $edit = array(
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    $this->drupalPost('user/login', $edit, 'Log in');
+    $this->backdropPost('user/login', $edit, 'Log in');
     // Set up application.
-    $this->drupalGet('user/' . $account->uid . '/security/tfa/app-setup');
+    $this->backdropGet('user/' . $account->uid . '/security/tfa/app-setup');
     $pass_form = array(
       'current_pass' => $account->pass_raw,
     );
-    $this->drupalPost(NULL, $pass_form, 'Confirm');
+    $this->backdropPost(NULL, $pass_form, 'Confirm');
     $result = $this->xpath('//input[@name="seed"]');
     if (empty($result)) {
       $this->fail('Unable to extract seed from page. Aborting test.');
@@ -229,15 +229,15 @@ class TfaBasicTestCase extends DrupalWebTestCase {
     $code_form = array(
       'code' => $this->ga->getCode($this->seed),
     );
-    $this->drupalPost(NULL, $code_form, 'Verify and save');
+    $this->backdropPost(NULL, $code_form, 'Verify and save');
 
-    $this->drupalLogout();
+    $this->backdropLogout();
 
     $edit = array(
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    $this->drupalPost('user/login', $edit, 'Log in');
+    $this->backdropPost('user/login', $edit, 'Log in');
     $url_parts = explode('/', $this->url);
     $login_hash = array_pop($url_parts);
 
@@ -246,22 +246,22 @@ class TfaBasicTestCase extends DrupalWebTestCase {
     $code_form = array(
       'code' => $code,
     );
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, $code_form, 'Verify');
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $code_form, 'Verify');
     $this->assertText('My account');
 
     // Logout and retry same code.
-    $this->drupalLogout();
+    $this->backdropLogout();
     $edit = array(
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    $this->drupalPost('user/login', $edit, 'Log in');
+    $this->backdropPost('user/login', $edit, 'Log in');
     $url_parts = explode('/', $this->url);
     $login_hash = array_pop($url_parts);
     $code_form = array(
       'code' => $code,
     );
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, $code_form, 'Verify');
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $code_form, 'Verify');
     $this->assertNoText('My account');
     $this->assertText($this->uiStrings('tfa-replay'));
 
@@ -271,25 +271,25 @@ class TfaBasicTestCase extends DrupalWebTestCase {
     $code_form = array(
       'code' => $code,
     );
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, $code_form, 'Verify');
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $code_form, 'Verify');
     $this->assertText('My account');
   }
 
   public function testRequired() {
     variable_set('tfa_enabled', TRUE);
     variable_set('tfa_validate_plugin', 'tfa_basic_totp');
-    $account = $this->drupalCreateUser(array('access content', 'setup own tfa'));
+    $account = $this->backdropCreateUser(array('access content', 'setup own tfa'));
     $edit = array(
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    $this->drupalPost('user/login', $edit, 'Log in');
+    $this->backdropPost('user/login', $edit, 'Log in');
     // Set up application.
-    $this->drupalGet('user/' . $account->uid . '/security/tfa/app-setup');
+    $this->backdropGet('user/' . $account->uid . '/security/tfa/app-setup');
     $pass_form = array(
       'current_pass' => $account->pass_raw,
     );
-    $this->drupalPost(NULL, $pass_form, 'Confirm');
+    $this->backdropPost(NULL, $pass_form, 'Confirm');
     $result = $this->xpath('//input[@name="seed"]');
     if (empty($result)) {
       $this->fail('Unable to extract seed from page. Aborting test.');
@@ -302,18 +302,18 @@ class TfaBasicTestCase extends DrupalWebTestCase {
     $code_form = array(
       'code' => $this->ga->getCode($this->seed),
     );
-    $this->drupalPost(NULL, $code_form, 'Verify and save');
+    $this->backdropPost(NULL, $code_form, 'Verify and save');
 
     // Set required for authenticated and confirm messages.
-    variable_set('tfa_basic_roles_require', array(DRUPAL_AUTHENTICATED_RID => DRUPAL_AUTHENTICATED_RID));
-    $this->drupalGet('user/' . $account->uid . '/security/tfa/disable');
+    variable_set('tfa_basic_roles_require', array(BACKDROP_AUTHENTICATED_ROLE => BACKDROP_AUTHENTICATED_ROLE));
+    $this->backdropGet('user/' . $account->uid . '/security/tfa/disable');
     $this->assertText($this->uiStrings('disable-required'));
     // Disable TFA.
-    $this->drupalPost(NULL, $pass_form, 'Disable');
-    $this->drupalGet('user/logout');
+    $this->backdropPost(NULL, $pass_form, 'Disable');
+    $this->backdropGet('user/logout');
 
     // Confirm cannot log in.
-    $this->drupalPost('user/login', $edit, 'Log in');
+    $this->backdropPost('user/login', $edit, 'Log in');
     $this->assertNoLink('Log out', 'Not authenticated');
     $this->assertText($this->uiStrings('required'), 'Required text shows');
   }

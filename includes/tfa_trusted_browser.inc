@@ -90,7 +90,7 @@ class TfaTrustedBrowser extends TfaBasePlugin implements TfaLoginPluginInterface
    * @return string
    */
   protected function generateBrowserId() {
-    $id = base64_encode(drupal_random_bytes(32));
+    $id = base64_encode(backdrop_random_bytes(32));
     return strtr($id, array('+' => '-', '/' => '_', '=' => ''));
   }
 
@@ -109,7 +109,7 @@ class TfaTrustedBrowser extends TfaBasePlugin implements TfaLoginPluginInterface
       'ip' => ip_address(),
       'name' => $name,
     );
-    drupal_write_record('tfa_trusted_browser', $record);
+    backdrop_write_record('tfa_trusted_browser', $record);
     // Issue cookie with ID.
     $cookie_secure = ini_get('session.cookie_secure');
     $expiration = REQUEST_TIME + $this->expiration;
@@ -129,7 +129,7 @@ class TfaTrustedBrowser extends TfaBasePlugin implements TfaLoginPluginInterface
       'did' => $did,
       'last_used' => REQUEST_TIME,
     );
-    drupal_write_record('tfa_trusted_browser', $record, 'did');
+    backdrop_write_record('tfa_trusted_browser', $record, 'did');
   }
 
   /**

@@ -33,7 +33,7 @@ class TfaTotp extends TfaBasePlugin implements TfaValidationPluginInterface {
     // Allow codes within tolerance range of 3 * 30 second units.
     $this->timeSkew = variable_get('tfa_basic_time_skew', 3);
     // Recommended: set variable tfa_totp_secret_key in settings.php.
-    $this->encryptionKey = settings_get('tfa_basic_secret_key', drupal_get_private_key());
+    $this->encryptionKey = settings_get('tfa_basic_secret_key', backdrop_get_private_key());
     $this->alreadyAccepted = FALSE;
   }
 
@@ -107,7 +107,7 @@ class TfaTotp extends TfaBasePlugin implements TfaValidationPluginInterface {
    */
   protected function storeAcceptedCode($code) {
     $code = preg_replace('/\s+/', '', $code);
-    $hash = hash('sha1', drupal_get_hash_salt() . $code);
+    $hash = hash('sha1', backdrop_get_hash_salt() . $code);
     db_insert('tfa_accepted_code')
       ->fields(array(
         'uid' => $this->context['uid'],
@@ -124,7 +124,7 @@ class TfaTotp extends TfaBasePlugin implements TfaValidationPluginInterface {
    * @return bool
    */
   protected function alreadyAcceptedCode($code) {
-    $hash = hash('sha1', drupal_get_hash_salt() . $code);
+    $hash = hash('sha1', backdrop_get_hash_salt() . $code);
     $result = db_query(
       "SELECT code_hash FROM {tfa_accepted_code} WHERE uid = :uid AND code_hash = :code",
       array(':uid' => $this->context['uid'], ':code' => $hash)
@@ -189,7 +189,7 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupPluginInterface {
     parent::__construct($context);
     // Generate seed.
     $this->seed = $this->createSeed();
-    $this->namePrefix = variable_get('tfa_basic_name_prefix', variable_get('site_name', 'Drupal'));
+    $this->namePrefix = variable_get('tfa_basic_name_prefix', variable_get('site_name', 'Backdrop'));
   }
 
   /**
@@ -219,7 +219,7 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupPluginInterface {
       '#description' => t('Enter this code into your two-factor authentication app or scan the QR code below.'),
     );
     // QR image of seed.
-    if (file_exists(drupal_get_path('module', 'tfa_basic') . '/includes/qrcodejs/qrcode.min.js')) {
+    if (file_exists(backdrop_get_path('module', 'tfa_basic') . '/includes/qrcodejs/qrcode.min.js')) {
       $form['qr_image_wrapper']['qr_image'] = array(
         '#markup' => '<div id="tfa-qrcode"></div>',
       );
@@ -314,10 +314,10 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupPluginInterface {
     $existing = $this->getSeed();
     if (!empty($existing)) {
       // Update existing seed.
-      drupal_write_record('tfa_totp_seed', $record, 'uid');
+      backdrop_write_record('tfa_totp_seed', $record, 'uid');
     }
     else {
-      drupal_write_record('tfa_totp_seed', $record);
+      backdrop_write_record('tfa_totp_seed', $record);
     }
   }
 

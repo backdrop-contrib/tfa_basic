@@ -225,14 +225,14 @@ function tfa_basic_disable_form($form, &$form_state, $account) {
     $preamble_desc = t('Are you sure you want to disable TFA on account %name?', array('%name' => $account->name));
     $notice_desc = t('TFA settings and data will be lost. %name can re-enable TFA again from their profile.', array('%name' => $account->name));
     if (tfa_basic_tfa_required($account)) {
-      drupal_set_message(t("This account is required to have TFA enabled per the 'require TFA' permission on one of their roles. Disabling TFA will remove their ability to log back into the site. If you continue, consider also removing the role so they can authenticate and setup TFA again."), 'warning');
+      backdrop_set_message(t("This account is required to have TFA enabled per the 'require TFA' permission on one of their roles. Disabling TFA will remove their ability to log back into the site. If you continue, consider also removing the role so they can authenticate and setup TFA again."), 'warning');
     }
   }
   else {
     $preamble_desc = t('Are you sure you want to disable your two-factor authentication setup?');
     $notice_desc = t("Your settings and data will be lost. You can re-enable two-factor authentication again from your profile.");
     if (tfa_basic_tfa_required($account)) {
-      drupal_set_message(t('Your account must have at least one two-factor authentication method enabled. Continuing will disable your ability to log back into this site.'), 'warning');
+      backdrop_set_message(t('Your account must have at least one two-factor authentication method enabled. Continuing will disable your ability to log back into this site.'), 'warning');
       $notice_desc = t('Your settings and data will be lost and you will be unable to log back into the site. To regain access contact a site administrator.');
     }
   }
@@ -285,7 +285,7 @@ function tfa_basic_disable_form_validate($form, &$form_state) {
     $account = $user;
   }
   // Check password. (from user.module user_validate_current_pass()).
-  require_once DRUPAL_ROOT . '/' . variable_get('password_inc', 'core/includes/password.inc');
+  require_once BACKDROP_ROOT . '/' . variable_get('password_inc', 'core/includes/password.inc');
   $current_pass = user_check_password($form_state['values']['current_pass'], $account);
   if (!$current_pass) {
     form_set_error('current_pass', t("Incorrect password."));
@@ -298,7 +298,7 @@ function tfa_basic_disable_form_validate($form, &$form_state) {
 function tfa_basic_disable_form_submit($form, &$form_state) {
   $account = $form_state['storage']['account'];
   if ($form_state['values']['op'] === $form_state['values']['cancel']) {
-    drupal_set_message(t('TFA disable canceled.'));
+    backdrop_set_message(t('TFA disable canceled.'));
     $form_state['redirect'] = 'user/' . $account->uid . '/security/tfa';
     return;
   }
@@ -320,9 +320,9 @@ function tfa_basic_disable_form_submit($form, &$form_state) {
   ), WATCHDOG_NOTICE);
 
   // E-mail account to inform user that it has been disabled.
-  drupal_mail('tfa_basic', 'tfa_basic_disabled_configuration', $account->mail, user_preferred_language($account), $params);
+  backdrop_mail('tfa_basic', 'tfa_basic_disabled_configuration', $account->mail, user_preferred_language($account), $params);
 
-  drupal_set_message(t('TFA has been disabled.'));
+  backdrop_set_message(t('TFA has been disabled.'));
   $form_state['redirect'] = 'user/' . $account->uid . '/security/tfa';
 }
 
@@ -386,7 +386,7 @@ function tfa_basic_setup_form($form, &$form_state, $account, $method = 'tfa_basi
     $context = array('uid' => $account->uid);
     switch ($method) {
       case 'tfa_basic_totp':
-        drupal_set_title(t('TFA setup - Application'));
+        backdrop_set_title(t('TFA setup - Application'));
         $setup_plugin = new TfaTotpSetup($context);
         $tfa_setup = new TfaSetup($setup_plugin, $context);
 
@@ -401,7 +401,7 @@ function tfa_basic_setup_form($form, &$form_state, $account, $method = 'tfa_basi
         break;
 
       case 'tfa_basic_trusted_browser':
-        drupal_set_title(t('TFA setup - Trusted browsers'));
+        backdrop_set_title(t('TFA setup - Trusted browsers'));
         $setup_plugin = new TfaTrustedBrowserSetup($context);
         $tfa_setup = new TfaSetup($setup_plugin, $context);
         $form = $tfa_setup->getForm($form, $form_state);
@@ -409,7 +409,7 @@ function tfa_basic_setup_form($form, &$form_state, $account, $method = 'tfa_basi
         break;
 
       case 'tfa_basic_recovery_code':
-        drupal_set_title(t('TFA setup - Recovery codes'));
+        backdrop_set_title(t('TFA setup - Recovery codes'));
         $setup_plugin = new TfaBasicRecoveryCodeSetup($context);
         $tfa_setup = new TfaSetup($setup_plugin, $context);
         $form = $tfa_setup->getForm($form, $form_state);
@@ -417,7 +417,7 @@ function tfa_basic_setup_form($form, &$form_state, $account, $method = 'tfa_basi
         break;
 
       case 'tfa_basic_sms':
-        drupal_set_title(t('TFA setup - SMS'));
+        backdrop_set_title(t('TFA setup - SMS'));
         // SMS itself has multiple steps. Begin with phone number entry.
         if (empty($form_state['storage'][$method])) {
           $default_number = tfa_basic_get_mobile_number($account);
@@ -451,11 +451,11 @@ function tfa_basic_setup_form($form, &$form_state, $account, $method = 'tfa_basi
         // Then validate by sending an SMS.
         else {
           $number = tfa_basic_format_number($form_state['storage']['sms_number']);
-          drupal_set_message(t("A code was sent to @number. It may take up to a minute for its arrival.", array('@number' => $number)));
+          backdrop_set_message(t("A code was sent to @number. It may take up to a minute for its arrival.", array('@number' => $number)));
           $tfa_setup = $form_state['storage'][$method];
           $form = $tfa_setup->getForm($form, $form_state);
           if (isset($form_state['storage']['full_setup'])) {
-            drupal_set_message(t("If the code does not arrive or you entered the wrong number skip this step to continue without SMS delivery. You can enable it after completing the rest of TFA setup."));
+            backdrop_set_message(t("If the code does not arrive or you entered the wrong number skip this step to continue without SMS delivery. You can enable it after completing the rest of TFA setup."));
           }
           else {
             $form['sms_code']['#description'] .= ' ' . l(t('If the code does not arrive or you entered the wrong number click here to start over.'), 'user/' . $account->uid . '/security/tfa/sms-setup');
@@ -521,7 +521,7 @@ function tfa_basic_setup_form_validate($form, &$form_state) {
       $account = $user;
     }
     // Check password. (from user.module user_validate_current_pass()).
-    require_once DRUPAL_ROOT . '/' . variable_get('password_inc', 'core/includes/password.inc');
+    require_once BACKDROP_ROOT . '/' . variable_get('password_inc', 'core/includes/password.inc');
     $current_pass = user_check_password($form_state['values']['current_pass'], $account);
     if (!$current_pass) {
       form_set_error('current_pass', t("Incorrect password."));
@@ -563,7 +563,7 @@ function tfa_basic_setup_form_submit($form, &$form_state) {
 
   // Cancel button.
   if (isset($form_state['values']['cancel']) && $form_state['values']['op'] === $form_state['values']['cancel']) {
-    drupal_set_message('TFA setup canceled.');
+    backdrop_set_message('TFA setup canceled.');
     $form_state['redirect'] = 'user/' . $account->uid . '/security/tfa';
     return;
   }
@@ -598,7 +598,7 @@ function tfa_basic_setup_form_submit($form, &$form_state) {
   // Disabling SMS delivery.
   if (isset($form_state['values']['sms_disable']) && $form_state['values']['op'] === $form_state['values']['sms_disable']) {
     tfa_basic_setup_save_data($account, array('sms' => FALSE));
-    drupal_set_message(t('TFA SMS delivery disabled.'));
+    backdrop_set_message(t('TFA SMS delivery disabled.'));
     $form_state['redirect'] = 'user/' . $account->uid . '/security/tfa';
     watchdog('tfa_basic', 'TFA SMS disabled for user @name UID !uid', array(
       '@name' => $account->name,
@@ -627,7 +627,7 @@ function tfa_basic_setup_form_submit($form, &$form_state) {
     if (!empty($form_state['storage'][$method])) {
       $setup_class = $form_state['storage'][$method];
       if (!$setup_class->submitForm($form, $form_state)) {
-        drupal_set_message(t('There was an error during TFA setup. Your settings have not been saved.'), 'error');
+        backdrop_set_message(t('There was an error during TFA setup. Your settings have not been saved.'), 'error');
         $form_state['redirect'] = 'user/' . $account->uid . '/security/tfa';
         return;
       }
@@ -650,7 +650,7 @@ function tfa_basic_setup_form_submit($form, &$form_state) {
       return;
     }
     // Else, setup complete and return to overview page.
-    drupal_set_message(t('TFA setup complete.'));
+    backdrop_set_message(t('TFA setup complete.'));
     $form_state['redirect'] = 'user/' . $account->uid . '/security/tfa';
 
     // Log and notify if this was full setup.
@@ -660,7 +660,7 @@ function tfa_basic_setup_form_submit($form, &$form_state) {
       );
       tfa_basic_setup_save_data($account, $data);
       $params = array('account' => $account);
-      drupal_mail('tfa_basic', 'tfa_basic_tfa_enabled', $account->mail, user_preferred_language($account), $params);
+      backdrop_mail('tfa_basic', 'tfa_basic_tfa_enabled', $account->mail, user_preferred_language($account), $params);
       watchdog('tfa_basic', 'TFA enabled for user @name UID !uid', array(
         '@name' => $account->name,
         '!uid' => $account->uid,
@@ -725,7 +725,7 @@ function _tfa_basic_set_next_step(&$form_state, $this_step, $skipped_step = FALS
     $count = count($form_state['storage']['steps_left']);
     $output .= ' ' . format_plural($count, 'One setup step remaining.', '@count TFA setup steps remain.', array('@count' => $count));
     if ($output) {
-      drupal_set_message($output);
+      backdrop_set_message($output);
     }
 
     // Set next step and mark form for rebuild.

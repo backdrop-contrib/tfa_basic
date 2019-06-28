@@ -1,10 +1,10 @@
 ## Basic plugins for TFA module
 
-Intent is to provide basic functionality of TFA Drupal module and to be an
+Intent is to provide basic functionality of TFA Backdrop module and to be an
 example of TFA plugin development.
 
 Please use the public issue queue for all feature and support requests:
-https://www.drupal.org/project/issues/tfa_basic
+https://github.com/backdrop-contrib/tfa_basic/issues/
 
 ### Plugins
 
@@ -26,7 +26,7 @@ https://www.drupal.org/project/issues/tfa_basic
 
  * tfa_basic_secret_key
  Secret key to to use as encryption key for TOTP seed encryption. Should be set
- in settings.php and not in the Drupal database.
+ in settings.php and not in the Backdrop database.
 
  * tfa_basic_time_skew
  Number of 30 second chunks to allow TOTP keys between.
@@ -77,7 +77,7 @@ Prerequisites:
 ### Installing Twilio PHP library
 
 TFA SMS plugin requires the Twilio PHP library for sending SMS codes. You can
-install the Twilio PHP library manually or via the Drupal Libraries API.
+install the Twilio PHP library manually or via the Backdrop Libraries API.
 
 Option 1, install Twilio PHP manually:
 
@@ -86,9 +86,9 @@ Option 1, install Twilio PHP manually:
 
 Such that the file tfa_basic/includes/twilio-php/Services/Twilio.php exists.
 
-Option 2, install via Drupal Libraries API:
+Option 2, install via Backdrop Libraries API:
 
- 1. Install Drupal Libraries API: https://www.drupal.org/project/libraries
+ 1. Install Backdrop Libraries API: https://www.backdropcms.org/project/libraries
  2. Download the Twilio PHP library from (http://www.twilio.com/docs/libraries).
  3. Extract the library in your sites/all/libraries folder and rename the
     directory to 'twilio'.
@@ -110,7 +110,7 @@ Basic that you are using custom storage.
 
 Finally, implement hook_tfa_basic_get_mobile_number_alter() in a custom module.
 The sole argument is an array with elements 'account' and 'number'. 'account' is
-the Drupal user account object you can use in finding the mobile number.
+the Backdrop user account object you can use in finding the mobile number.
 'number' will be an empty string if there's no account field in use. You should
 set the 'number' property to the mobile number you have stored.
 

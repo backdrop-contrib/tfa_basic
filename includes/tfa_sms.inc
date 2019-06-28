@@ -33,7 +33,7 @@ class TfaBasicSms extends TfaBasePlugin implements TfaValidationPluginInterface,
     if (!$this->code) {
       $this->code = $this->generate();
       if (!$this->sendCode($this->code)) {
-        drupal_set_message(t('Unable to deliver the code. Please contact support.'), 'error');
+        backdrop_set_message(t('Unable to deliver the code. Please contact support.'), 'error');
       }
     }
   }
@@ -83,10 +83,10 @@ class TfaBasicSms extends TfaBasePlugin implements TfaValidationPluginInterface,
     if ($form_state['values']['op'] === $form_state['values']['resend']) {
       $this->code = $this->generate();
       if (!$this->sendCode($this->code)) {
-        drupal_set_message(t('Unable to deliver the code. Please contact support.'), 'error');
+        backdrop_set_message(t('Unable to deliver the code. Please contact support.'), 'error');
       }
       else {
-        drupal_set_message(t('Code resent'));
+        backdrop_set_message(t('Code resent'));
       }
       return FALSE;
     }
@@ -119,7 +119,7 @@ class TfaBasicSms extends TfaBasePlugin implements TfaValidationPluginInterface,
     for ($i = 0; $i < $this->codeLength; $i++) {
       do {
         // Find a secure random number within the range needed.
-        $index = ord(drupal_random_bytes(1));
+        $index = ord(backdrop_random_bytes(1));
       } while ($index > $len);
 
       // Each iteration, pick a random character from the
