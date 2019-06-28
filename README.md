@@ -1,4 +1,4 @@
-## Basic plugins for TFA module
+# Basic plugins for TFA module
 
 Intent is to provide basic functionality of TFA Backdrop module and to be an
 example of TFA plugin development.
@@ -6,7 +6,7 @@ example of TFA plugin development.
 Please use the public issue queue for all feature and support requests:
 https://github.com/backdrop-contrib/tfa_basic/issues/
 
-### Plugins
+## Plugins
 
  * TOTP
  A Time-based One Time Password plugin using PHP_Gansta\GoogleAuthenticator
@@ -22,7 +22,7 @@ https://github.com/backdrop-contrib/tfa_basic/issues/
  * Twilio SMS
  Optional plugin for sending TFA codes via SMS messages. See SMS section below.
 
-### Variables
+## Variables
 
  * tfa_basic_secret_key
  Secret key to to use as encryption key for TOTP seed encryption. Should be set
@@ -123,3 +123,17 @@ storage.
 
 * Implement hook_tfa_basic_valid_number_alter() for number validation
 * Implement hook_tfa_basic_format_number_alter() for formatting number output
+
+## License
+
+This project is GPL v2 software. See the LICENSE.txt file in this directory for complete text.
+
+## Current Maintainers
+
+This module is currently seeking maintainers.
+
+## Credits
+
+Ported to Backdrop by Herb v/d Dool (https://github.com/herbdool/)
+
+This module was originally written for Drupal (https://drupal.org/project/tfa). Drupal maintainers are: [coltrane](https://www.drupal.org/u/coltrane).

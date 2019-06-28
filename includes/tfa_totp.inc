@@ -31,7 +31,7 @@ class TfaTotp extends TfaBasePlugin implements TfaValidationPluginInterface {
     parent::__construct($context);
     $this->ga = new PHPGangsta_GoogleAuthenticator();
     // Allow codes within tolerance range of 3 * 30 second units.
-    $this->timeSkew = variable_get('tfa_basic_time_skew', 3);
+    $this->timeSkew = config_get('tfa_basic.settings', 'tfa_basic_time_skew');
     // Recommended: set variable tfa_totp_secret_key in settings.php.
     $this->encryptionKey = settings_get('tfa_basic_secret_key', backdrop_get_private_key());
     $this->alreadyAccepted = FALSE;
@@ -189,7 +189,8 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupPluginInterface {
     parent::__construct($context);
     // Generate seed.
     $this->seed = $this->createSeed();
-    $this->namePrefix = variable_get('tfa_basic_name_prefix', variable_get('site_name', 'Backdrop'));
+    $name_prefix = config_get('tfa_basic.settings', 'tfa_basic_name_prefix');
+    $this->namePrefix = !empty($name_prefix) ? $name_prefix : config_get('system.core', 'site_name');
   }
 
   /**

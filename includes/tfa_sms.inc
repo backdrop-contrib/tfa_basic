@@ -15,10 +15,9 @@ class TfaBasicSms extends TfaBasePlugin implements TfaValidationPluginInterface,
     }
 
     $this->client = $twilio_client;
-    $this->twilioNumber = variable_get('tfa_basic_twilio_account_number', '');
+    $this->twilioNumber = config_get('tfa_basic.settings', 'tfa_basic_twilio_account_number');
     $this->codeLength = 6;
-    $this->messageText = variable_get('tfa_basic_twilio_message_text',
-      'Verification code: !code');
+    $this->messageText = config_get_translated('tfa_basic.settings', 'tfa_basic_twilio_message_text');
 
     $this->mobileNumber = $mobile_number;
     if (!empty($context['mobile_number'])) {

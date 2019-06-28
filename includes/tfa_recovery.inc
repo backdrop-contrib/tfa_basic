@@ -144,7 +144,7 @@ class TfaBasicRecoveryCodeSetup extends TfaBasicRecoveryCode implements TfaSetup
 
   public function __construct(array $context) {
     parent::__construct($context);
-    $this->codeLimit = variable_get('tfa_recovery_codes_amount', 10);
+    $this->codeLimit = config_get('tfa_basic.settings', 'tfa_recovery_codes_amount');
   }
 
   /**

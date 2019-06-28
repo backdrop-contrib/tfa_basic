@@ -1,0 +1,21 @@
+{
+    "_config_name": "tfa_basic.settings",
+    "_config_translatables": [
+        "tfa_basic_help_text",
+        "tfa_basic_twilio_message_text"
+    ],
+    "tfa_basic_cookie_domain": "",
+    "tfa_basic_roles_require": [],
+    "tfa_basic_time_skew": 3,
+    "tfa_recovery_codes_amount": 10,
+    "tfa_basic_accepted_code_expiration": 2592000,
+    "tfa_basic_trust_cookie_expiration": 2592000,
+    "tfa_basic_name_prefix": "Backdrop",
+    "tfa_basic_twilio_account_sid": "",
+    "tfa_basic_twilio_account_number": "",
+    "tfa_basic_twilio_message_text": "Verification code: !code",
+    "tfa_basic_twilio_account_token": "",
+    "tfa_basic_sms_nanp_validate": 1,
+    "tfa_basic_phone_field": "",
+    "tfa_basic_help_text": "Contact support to reset your access"
+}

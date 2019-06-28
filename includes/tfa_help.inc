@@ -13,8 +13,7 @@ class TfaBasicHelp extends TfaBasePlugin implements TfaValidationPluginInterface
    * @copydoc TfaBasePlugin::getForm()
    */
   public function getForm(array $form, array &$form_state) {
-    $default = t('Contact support to reset your access');
-    $content = variable_get('tfa_basic_help_text', $default);
+    $content = config_get_translated('tfa_basic_help_text');
     $form['help'] = array(
       '#type' => 'markup',
       '#markup' => check_plain($content),

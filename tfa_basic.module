@@ -13,6 +13,17 @@ function tfa_basic_permission() {
 }
 
 /**
+ * Implements hook_config_info().
+ */
+function tfa_basic_config_info() {
+  $prefixes['tfa_basic.settings'] = array(
+    'label' => t('TFA Basic settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
+
+/**
  * Implements hook_library().
  */
 function tfa_basic_library() {
@@ -158,7 +169,7 @@ function tfa_basic_setup_access($account, $permission = '') {
  */
 function tfa_basic_cron() {
   // Delete trusted browser entries older than expiration.
-  $expiration = variable_get('tfa_basic_trust_cookie_expiration', 3600 * 24 * 30);
+  $expiration = config_get('tfa_basic.settings', 'tfa_basic_trust_cookie_expiration');
 
   $num_deleted = db_delete('tfa_trusted_browser')
     ->condition('created', REQUEST_TIME - $expiration, '<')
@@ -168,7 +179,7 @@ function tfa_basic_cron() {
   }
 
   // Delete accepted codes older than expiration.
-  $accepted_expiration = variable_get('tfa_basic_accepted_code_expiration', 3600 * 24);
+  $accepted_expiration = config_get('tfa_basic.settings', 'tfa_basic_accepted_code_expiration');
   db_delete('tfa_accepted_code')
     ->condition('time_accepted', REQUEST_TIME - $accepted_expiration, '<')
     ->execute();
@@ -257,8 +268,8 @@ function tfa_basic_get_twilio_client() {
   if (!class_exists('Services_Twilio')) {
     return FALSE;
   }
-  $sid = variable_get('tfa_basic_twilio_account_sid', '');
-  $token = variable_get('tfa_basic_twilio_account_token', '');
+  $sid = config_get('tfa_basic.settings', 'tfa_basic_twilio_account_sid');
+  $token = config_get('tfa_basic.settings', 'tfa_basic_twilio_account_token');
   return new Services_Twilio($sid, $token);
 }
 
@@ -312,7 +323,7 @@ function tfa_basic_tfa_ready_require($account) {
  */
 function tfa_basic_tfa_required($account) {
   $required = FALSE;
-  $required_roles = variable_get('tfa_basic_roles_require', array());
+  $required_roles = config_get('tfa_basic.settings', 'tfa_basic_roles_require');
   if (!empty($required_roles)) {
     foreach ($required_roles as $rid => $enabled) {
       if ($enabled && array_key_exists($rid, $account->roles)) {
@@ -334,7 +345,7 @@ function tfa_basic_tfa_required($account) {
  *   Mobile phone number or FALSE if not set.
  */
 function tfa_basic_get_mobile_number($account) {
-  $phone_field = variable_get('tfa_basic_phone_field', '');
+  $phone_field = config_get('tfa_basic.settings', 'tfa_basic_phone_field');
   $number = FALSE;
   // Note, set tfa_basic_phone_field to FALSE to avoid using account field as
   // storage.
@@ -359,7 +370,7 @@ function tfa_basic_get_mobile_number($account) {
  * @param string $number
  */
 function tfa_basic_set_mobile_number($account, $number) {
-  $phone_field = variable_get('tfa_basic_phone_field', '');
+  $phone_field = config_get('tfa_basic.settings', 'tfa_basic_phone_field');
   if ($phone_field !== FALSE) {
     if (isset($account->{$phone_field})) {
       $edit = array(
@@ -492,7 +503,7 @@ function tfa_basic_setup_save_data($account, $data = array()) {
  */
 function tfa_basic_valid_number($number) {
   $errors = array();
-  if (variable_get('tfa_basic_sms_nanp_validate', 1)) {
+  if (config_get('tfa_basic.settings', 'tfa_basic_sms_nanp_validate')) {
     // Strip leading '1' if set.
     if (strpos($number, '1') === 0) {
       $number = ltrim($number, '1');
@@ -560,14 +571,15 @@ function tfa_basic_form_tfa_admin_settings_alter(&$form, &$form_state, $form_id)
     '#title' => t('Roles required to have set up TFA'),
     '#description' => t("Login will be denied to an account without TFA setup and any matching role."),
     '#options' => user_roles(TRUE),
-    '#default_value' => variable_get('tfa_basic_roles_require', array()),
+    '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_roles_require'),
   );
 
   // Add cookie domain field to TFA admin settings.
+  $tfa_basic_cookie_domain = config_get('tfa_basic.settings', 'tfa_basic_cookie_domain');
   $form['tfa_basic_cookie_domain'] = array(
     '#type' => 'textfield',
     '#title' => t('Cookie domain'),
-    '#default_value' => variable_get('tfa_basic_cookie_domain', $cookie_domain),
+    '#default_value' => !empty($tfa_basic_cookie_domain) ? $tfa_basic_cookie_domain : $cookie_domain,
     '#description' => t('Domain to set for the trusted browser TFA cookie.'),
     '#states' => array(
       'visible' => array(
@@ -595,42 +607,41 @@ function tfa_basic_form_tfa_admin_settings_alter(&$form, &$form_state, $form_id)
     $form['tfa_basic_twilio_account_sid'] = array(
       '#type' => 'textfield',
       '#title' => t('Twilio account SID'),
-      '#default_value' => variable_get('tfa_basic_twilio_account_sid', ''),
+      '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_twilio_account_sid'),
       '#description' => t('Twilio account SID from twilio.com.'),
       '#states' => $sms_states
     );
     $form['tfa_basic_twilio_account_token'] = array(
       '#type' => 'textfield',
       '#title' => t('Twilio account token'),
-      '#default_value' => variable_get('tfa_basic_twilio_account_token', ''),
+      '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_twilio_account_token'),
       '#description' => t('Private Twilio account token from twilio.com.'),
       '#states' => $sms_states
     );
     $form['tfa_basic_twilio_account_number'] = array(
       '#type' => 'textfield',
       '#title' => t('Twilio account number'),
-      '#default_value' => variable_get('tfa_basic_twilio_account_number', ''),
+      '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_twilio_account_number'),
       '#description' => t('Private Twilio account number from twilio.com.'),
       '#states' => $sms_states
     );
     $form['tfa_basic_twilio_message_text'] = array(
       '#type' => 'textfield',
       '#title' => t('Twilio message text'),
-      '#default_value' => variable_get('tfa_basic_twilio_message_text',
-        'Verification code: !code'),
+      '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_twilio_message_text'),
       '#description' => t('Text to be sent to the user. Use !code for the verification code.'),
       '#states' => $sms_states
     );
     $form['tfa_basic_sms_nanp_validate'] = array(
       '#type' => 'checkbox',
       '#title' => t('Validate phone numbers against NANP'),
-      '#default_value' => variable_get('tfa_basic_sms_nanp_validate', 1),
+      '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_sms_nanp_validate'),
       '#description' => t('If enabled phone numbers will be checked against the North American Numbering Plan.'),
       '#states' => $sms_states
     );
 
     // Mobile phone storage field. Set variable to FALSE to ignore.
-    $phone_field = variable_get('tfa_basic_phone_field', '');
+    $phone_field = config_get('tfa_basic.settings', 'tfa_basic_phone_field');
     if ($phone_field !== FALSE) {
       $form['tfa_basic_phone_field'] = array(
         '#title' => t('SMS mobile number'),
@@ -662,11 +673,10 @@ function tfa_basic_form_tfa_admin_settings_alter(&$form, &$form_state, $form_id)
 
   $form['tfa_fallback']['tfa_basic_help']['weight']['#default_value'] = 10;
   $form['tfa_fallback']['tfa_basic_help']['weight']['#disabled'] = TRUE;
-  $default_help = t('Contact support to reset your access');
   $form['tfa_basic_help_text'] = array(
     '#type' => 'textfield',
     '#title' => t('Help page text'),
-    '#default_value' => variable_get('tfa_basic_help_text', $default_help),
+    '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_help_text'),
     '#description' => t('Text to display on help page. Plain text only.'),
     '#states' => array(
       'visible' => array(
@@ -716,7 +726,7 @@ function tfa_basic_form_validate($form, &$form_state) {
     elseif (strpos($values['tfa_basic_twilio_message_text'], '!code') === FALSE) {
       form_set_error('tfa_basic_twilio_message_text', t('Message text must include token !code.'));
     }
-    $phone_field = variable_get('tfa_basic_phone_field', '');
+    $phone_field = config_get('tfa_basic.settings', 'tfa_basic_phone_field');
     if ($phone_field !== FALSE && empty($values['tfa_basic_phone_field'])) {
       form_set_error('', t('An account field for mobile number storage is required to use the Twilio SMS plugin. Consult TFA Basic README.txt for more info.'));
     }
@@ -727,32 +737,34 @@ function tfa_basic_form_validate($form, &$form_state) {
  * Submit for TFA admin settings alter.
  */
 function tfa_basic_form_submit($form, &$form_state) {
+  $config = config('tfa_basic.settings');
   if (!empty($form_state['values']['tfa_basic_cookie_domain'])) {
-    variable_set('tfa_basic_cookie_domain', $form_state['values']['tfa_basic_cookie_domain']);
+    $config->set('tfa_basic_cookie_domain', $form_state['values']['tfa_basic_cookie_domain']);
   }
   if (!empty($form_state['values']['tfa_basic_twilio_account_sid'])) {
-    variable_set('tfa_basic_twilio_account_sid', $form_state['values']['tfa_basic_twilio_account_sid']);
+    $config->set('tfa_basic_twilio_account_sid', $form_state['values']['tfa_basic_twilio_account_sid']);
   }
   if (!empty($form_state['values']['tfa_basic_twilio_account_token'])) {
-    variable_set('tfa_basic_twilio_account_token', $form_state['values']['tfa_basic_twilio_account_token']);
+    $config->set('tfa_basic_twilio_account_token', $form_state['values']['tfa_basic_twilio_account_token']);
   }
   if (!empty($form_state['values']['tfa_basic_twilio_account_number'])) {
-    variable_set('tfa_basic_twilio_account_number', $form_state['values']['tfa_basic_twilio_account_number']);
+    $config->set('tfa_basic_twilio_account_number', $form_state['values']['tfa_basic_twilio_account_number']);
   }
   if (!empty($form_state['values']['tfa_basic_twilio_message_text'])) {
-    variable_set('tfa_basic_twilio_message_text', $form_state['values']['tfa_basic_twilio_message_text']);
+    $config->set('tfa_basic_twilio_message_text', $form_state['values']['tfa_basic_twilio_message_text']);
   }
   if (isset($form_state['values']['tfa_basic_sms_nanp_validate'])) {
-    variable_set('tfa_basic_sms_nanp_validate', $form_state['values']['tfa_basic_sms_nanp_validate']);
+    $config->set('tfa_basic_sms_nanp_validate', $form_state['values']['tfa_basic_sms_nanp_validate']);
   }
   if (!empty($form_state['values']['tfa_basic_help_text'])) {
-    variable_set('tfa_basic_help_text', $form_state['values']['tfa_basic_help_text']);
+    $config->set('tfa_basic_help_text', $form_state['values']['tfa_basic_help_text']);
   }
-  $phone_field = variable_get('tfa_basic_phone_field', '');
+  $phone_field = config_get('tfa_basic.settings', 'tfa_basic_phone_field');
   if ($phone_field !== FALSE && !empty($form_state['values']['tfa_fallback']) && !empty($form_state['values']['tfa_fallback']['tfa_basic_sms']['enable']) && !empty($form_state['values']['tfa_basic_phone_field'])) {
-    variable_set('tfa_basic_phone_field', $form_state['values']['tfa_basic_phone_field']);
+    $config->set('tfa_basic_phone_field', $form_state['values']['tfa_basic_phone_field']);
   }
-  variable_set('tfa_basic_roles_require', $form_state['values']['required_tfa_roles']);
+  $config->set('tfa_basic_roles_require', $form_state['values']['required_tfa_roles']);
+  $config->save();
 }
 
 /**
@@ -761,12 +773,12 @@ function tfa_basic_form_submit($form, &$form_state) {
 function tfa_basic_mail($key, &$message, $params) {
   switch ($key) {
     case 'tfa_basic_tfa_enabled':
-      $message['subject'] = t('Your @site_name account now has two-factor authentication', array('@site_name' => variable_get('site_name', 'Backdrop')));
+      $message['subject'] = t('Your @site_name account now has two-factor authentication', array('@site_name' => config_get('system.core', 'site_name')));
       $message['body']['body'] = tfa_basic_tfa_enabled_body($message, $params);
       break;
 
     case 'tfa_basic_disabled_configuration':
-      $message['subject'] = t('Your @site_name account no longer has two-factor authentication', array('@site_name' => variable_get('site_name', 'Backdrop')));
+      $message['subject'] = t('Your @site_name account no longer has two-factor authentication', array('@site_name' => config_get('system.core', 'site_name')));
       $message['body']['body'] = tfa_basic_tfa_disabled_body($message, $params);
       break;
 
@@ -793,7 +805,7 @@ This additional level of security will help to ensure that only you are able to 
 
 If you ever lose the device you configured, you should act quickly to delete its association with this account.
 
--- @site_name team", array('@site_name' => variable_get('site_name', 'Backdrop')));
+-- @site_name team", array('@site_name' => config_get('system.core', 'site_name')));
 
   return token_replace($text, array('user' => $params['account']), array('language' => $message['language'], 'sanitize' => FALSE, 'clear' => TRUE));
 }
@@ -816,7 +828,7 @@ Two-factor authentication has been disabled on your account.
 
 If you did not take this action, please contact a site administrator immediately.
 
--- @site_name team", array('@site_name' => variable_get('site_name', 'Backdrop')));
+-- @site_name team", array('@site_name' => config_get('system.core', 'site_name')));
 
   return token_replace($text, array('user' => $params['account']), array('language' => $message['language'], 'sanitize' => FALSE, 'clear' => TRUE));
 }

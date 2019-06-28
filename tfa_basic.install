@@ -179,120 +179,51 @@ function tfa_basic_schema() {
 }
 
 /**
- * Create new database table {tfa_recovery_code}.
+ * Implements hook_update_last_removed().
  */
-function tfa_basic_update_7001() {
-  $schema['tfa_recovery_code'] = array(
-    'fields' => array(
-      'id' => array(
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'uid' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'code' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-        'description' => 'Base 64 encoded encrypted code',
-      ),
-      'created' => array(
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'used' => array(
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-    ),
-    'primary key' => array('id'),
-    'indexes' => array(
-      'uid' => array('uid'),
-    ),
-  );
-  db_create_table('tfa_recovery_code', $schema['tfa_recovery_code']);
+function tfa_basic_update_last_removed() {
+  return 7003;
 }
 
 /**
- * Rename trusted device to trusted browser.
+ * Move TFA settings from variables to config.
  */
-function tfa_basic_update_7002() {
-  // Rename DB table.
-  db_rename_table('tfa_trusted_device', 'tfa_trusted_browser');
+function tfa_basic_update_1000() {
+  // Migrate variables to config.
+  $config = config('tfa.settings');
+  $config->set('tfa_basic_time_skew', update_variable_get('tfa_basic_time_skew', 3));
+  $config->set('tfa_basic_roles_require', update_variable_get('tfa_basic_roles_require', array()));
+  $config->set('tfa_recovery_codes_amount', update_variable_get('tfa_recovery_codes_amount', 10));
+  $config->set('tfa_basic_accepted_code_expiration', update_variable_get('tfa_basic_accepted_code_expiration', 3600 * 24));
+  $config->set('tfa_basic_trust_cookie_expiration', update_variable_get('tfa_basic_trust_cookie_expiration', 3600 * 24 * 30));
+  $config->set('tfa_basic_name_prefix', update_variable_get('tfa_basic_name_prefix', config_get('system.core', 'site_name')));
+  $config->set('tfa_basic_cookie_name', update_variable_get('tfa_basic_cookie_name', 'TB'));
+  $config->set('tfa_basic_cookie_domain', update_variable_get('tfa_basic_cookie_domain', ''));
+  $config->set('tfa_basic_twilio_account_sid', update_variable_get('tfa_basic_twilio_account_sid', ''));
+  $config->set('tfa_basic_twilio_account_number', update_variable_get('tfa_basic_twilio_account_number', ''));
+  $config->set('tfa_basic_twilio_message_text', update_variable_get('tfa_basic_twilio_message_text',
+        'Verification code: !code'));
+  $config->set('tfa_basic_twilio_account_token', update_variable_get('tfa_basic_twilio_account_token', ''));
+  $config->set('tfa_basic_sms_nanp_validate', update_variable_get('tfa_basic_sms_nanp_validate', 1));
+  $config->set('tfa_basic_phone_field', update_variable_get('tfa_basic_phone_field', ''));
+  $config->set('tfa_basic_help_text', update_variable_get('tfa_basic_help_text', 'Contact support to reset your access'));
+  $config->save();
 
-  // Rename login plugin.
-  $plugins = variable_get('tfa_login_plugins');
-  if (!empty($plugins)) {
-    foreach ($plugins as $k => $plugin) {
-      if ($plugin == 'tfa_basic_trusted_device') {
-        $plugins[$k] = 'tfa_basic_trusted_browser';
-        // Keep the legacy cookie name.
-        variable_set('tfa_basic_cookie_name', 'TD');
-      }
-    }
-    variable_set('tfa_login_plugins', $plugins);
-  }
-}
-
-/**
- * Create new database table {tfa_accepted_code}.
- */
-function tfa_basic_update_7003() {
-  $schema['tfa_accepted_code'] = array(
-    'fields' => array(
-      'cid' => array(
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'uid' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'code_hash' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-        'description' => '',
-      ),
-      'time_accepted' => array(
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-    ),
-    'primary key' => array('cid'),
-    'indexes' => array(
-      'uid_code' => array('uid', 'code_hash'),
-      'time_accepted' => array('time_accepted'),
-    ),
-  );
-  db_create_table('tfa_accepted_code', $schema['tfa_accepted_code']);
-}
-
-/**
- * Implements hook_uninstall().
- */
-function tfa_basic_uninstall() {
-  // Delete TFA Basic variables.
-  variable_del('tfa_basic_secret_key');
-  variable_del('tfa_basic_time_skew');
-  variable_del('tfa_recovery_codes_amount');
-  variable_del('tfa_basic_trust_cookie_expiration');
-  variable_del('tfa_basic_name_prefix');
-  variable_del('tfa_basic_cookie_name');
-  variable_del('tfa_basic_twilio_account_sid');
-  variable_del('tfa_basic_twilio_account_token');
-  variable_del('tfa_basic_sms_nanp_validate');
+  // Delete variables.
+  update_variable_del('tfa_basic_secret_key');
+  update_variable_del('tfa_basic_roles_require');
+  update_variable_del('tfa_basic_time_skew');
+  update_variable_del('tfa_recovery_codes_amount');
+  update_variable_del('tfa_basic_accepted_code_expiration');
+  update_variable_del('tfa_basic_trust_cookie_expiration');
+  update_variable_del('tfa_basic_name_prefix');
+  update_variable_del('tfa_basic_cookie_name');
+  update_variable_del('tfa_basic_cookie_domain');
+  update_variable_del('tfa_basic_twilio_account_sid');
+  update_variable_del('tfa_basic_twilio_account_number');
+  update_variable_del('tfa_basic_twilio_message_text');
+  update_variable_del('tfa_basic_twilio_account_token');
+  update_variable_del('tfa_basic_sms_nanp_validate');
+  update_variable_del('tfa_basic_phone_field');
+  update_variable_del('tfa_basic_help_text');
 }

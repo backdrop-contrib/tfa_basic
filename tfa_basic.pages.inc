@@ -28,7 +28,7 @@ function tfa_basic_overview($form, &$form_state, $account) {
 
   // Start with validate plugin setup.
   if (!$enabled) {
-    $validate_plugin = variable_get('tfa_validate_plugin', '');
+    $validate_plugin = config_get('tfa_basic.settings', 'tfa_validate_plugin');
     $output['setup'] = _tfa_basic_plugin_setup_form_overview($validate_plugin, $account, $user_tfa);
   }
   else {
@@ -57,9 +57,9 @@ function tfa_basic_overview($form, &$form_state, $account) {
  */
 function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tfa) {
   // No output if the plugin isn't enabled.
-  if ($plugin !== variable_get('tfa_validate_plugin', '') &&
-    !in_array($plugin, variable_get('tfa_fallback_plugins', array())) &&
-    !in_array($plugin, variable_get('tfa_login_plugins', array()))) {
+  if ($plugin !== config_get('tfa_basic.settings', 'tfa_validate_plugin') &&
+    !in_array($plugin, config_get('tfa_basic.settings', 'tfa_fallback_plugins')) &&
+    !in_array($plugin, config_get('tfa_basic.settings', 'tfa_login_plugins'))) {
     return array();
   }
   $enabled = isset($user_tfa['status']) && $user_tfa['status'] ? TRUE : FALSE;
@@ -133,7 +133,7 @@ function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tf
       $trusted_browsers = array();
       foreach ($trusted_browser->getTrustedBrowsers() as $device) {
         $vars = array(
-          '!expiration' => format_date($device['created'] + variable_get('tfa_basic_trust_cookie_expiration', 3600 * 24 * 30)),
+          '!expiration' => format_date($device['created'] + config_get('tfa_basic.settings', 'tfa_basic_trust_cookie_expiration')),
           '@browser' => $device['name'],
           '!time' => format_date($device['last_used']),
         );
@@ -285,7 +285,7 @@ function tfa_basic_disable_form_validate($form, &$form_state) {
     $account = $user;
   }
   // Check password. (from user.module user_validate_current_pass()).
-  require_once BACKDROP_ROOT . '/' . variable_get('password_inc', 'core/includes/password.inc');
+  require_once BACKDROP_ROOT . '/core/includes/password.inc';
   $current_pass = user_check_password($form_state['values']['current_pass'], $account);
   if (!$current_pass) {
     form_set_error('current_pass', t("Incorrect password."));
@@ -428,7 +428,7 @@ function tfa_basic_setup_form($form, &$form_state, $account, $method = 'tfa_basi
             '#description' => t('Enter your mobile phone number that can receive SMS codes. A code will be sent to this number for validation.'),
             '#default_value' => $default_number ?: '',
           );
-          $phone_field = variable_get('tfa_basic_phone_field', '');
+          $phone_field = config_get('tfa_basic.settings', 'tfa_basic_phone_field');
           if (!empty($phone_field)) {
             // Report that this is an account field.
             $field = field_info_instance('user', $phone_field, 'user');
@@ -521,7 +521,7 @@ function tfa_basic_setup_form_validate($form, &$form_state) {
       $account = $user;
     }
     // Check password. (from user.module user_validate_current_pass()).
-    require_once BACKDROP_ROOT . '/' . variable_get('password_inc', 'core/includes/password.inc');
+    require_once BACKDROP_ROOT . '/core/includes/password.inc';
     $current_pass = user_check_password($form_state['values']['current_pass'], $account);
     if (!$current_pass) {
       form_set_error('current_pass', t("Incorrect password."));
@@ -681,9 +681,9 @@ function _tfa_basic_full_setup_steps() {
     'tfa_basic_recovery_code',
   );
   foreach ($plugins as $plugin) {
-    if ($plugin === variable_get('tfa_validate_plugin', '') ||
-      in_array($plugin, variable_get('tfa_fallback_plugins', array())) ||
-      in_array($plugin, variable_get('tfa_login_plugins', array()))) {
+    if ($plugin === config_get('tfa_basic.settings', 'tfa_validate_plugin') ||
+      in_array($plugin, config_get('tfa_basic.settings', 'tfa_fallback_plugins')) ||
+      in_array($plugin, config_get('tfa_basic.settings', 'tfa_login_plugins'))) {
       $steps[] = $plugin;
     }
   }
