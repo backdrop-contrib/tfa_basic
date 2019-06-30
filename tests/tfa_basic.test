@@ -35,14 +35,6 @@ class TfaBasicTestCase extends BackdropWebTestCase {
    */
   protected $admin_user;
 
-  public static function getInfo() {
-    return array(
-      'name' => 'TFA Basic tests',
-      'description' => 'Test the TFA basic plugins.',
-      'group' => 'TFA',
-    );
-  }
-
   public function setUp() {
     // Enable TFA module and the test module.
     parent::setUp('tfa', 'tfa_basic');
@@ -60,15 +52,15 @@ class TfaBasicTestCase extends BackdropWebTestCase {
   }
 
   public function _testAppAndRecoverySetup() {
-    variable_set('tfa_enabled', FALSE);
+    config_set('tfa.settings', 'tfa_enabled', FALSE);
 
     $account = $this->web_user;
     $this->backdropLogin($account);
 
     // Enable TFA and begin configuration.
-    variable_set('tfa_enabled', TRUE);
-    variable_set('tfa_validate_plugin', 'tfa_basic_totp');
-    variable_set('tfa_fallback_plugins', array('tfa_basic_recovery_code'));
+    config_set('tfa.settings', 'tfa_enabled', TRUE);
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_basic_totp');
+    config_set('tfa.settings', 'tfa_fallback_plugins', array('tfa_basic_recovery_code'));
 
     $this->backdropGet('user/' . $account->uid . '/security/tfa');
 
@@ -121,7 +113,7 @@ class TfaBasicTestCase extends BackdropWebTestCase {
 
     // Store codes.
     $result = $this->xpath('//li');
-    while (list(, $node) = each($result)) {
+    foreach($result as $node) {
       $this->recoveryCodes[] = (string) $node;
     }
     $this->backdropPost(NULL, array(), 'Save');
@@ -203,8 +195,8 @@ class TfaBasicTestCase extends BackdropWebTestCase {
   }
 
   public function testTotpReplay() {
-    variable_set('tfa_enabled', TRUE);
-    variable_set('tfa_validate_plugin', 'tfa_basic_totp');
+    config_set('tfa.settings', 'tfa_enabled', TRUE);
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_basic_totp');
     $account = $this->backdropCreateUser(array('access content', 'setup own tfa'));
     $edit = array(
       'name' => $account->name,
@@ -265,8 +257,11 @@ class TfaBasicTestCase extends BackdropWebTestCase {
     $this->assertNoText('My account');
     $this->assertText($this->uiStrings('tfa-replay'));
 
+    // Wait a few seconds to ensure that the codes are reset.
+    sleep(3);
+
     // Set expire time and run cron to delete saved code to log in.
-    variable_set('tfa_basic_accepted_code_expiration', '0');
+    config_set('tfa_basic.settings', 'tfa_basic_accepted_code_expiration', 0);
     $this->cronRun();
     $code_form = array(
       'code' => $code,
@@ -276,8 +271,8 @@ class TfaBasicTestCase extends BackdropWebTestCase {
   }
 
   public function testRequired() {
-    variable_set('tfa_enabled', TRUE);
-    variable_set('tfa_validate_plugin', 'tfa_basic_totp');
+    config_set('tfa.settings', 'tfa_enabled', TRUE);
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_basic_totp');
     $account = $this->backdropCreateUser(array('access content', 'setup own tfa'));
     $edit = array(
       'name' => $account->name,
@@ -305,7 +300,7 @@ class TfaBasicTestCase extends BackdropWebTestCase {
     $this->backdropPost(NULL, $code_form, 'Verify and save');
 
     // Set required for authenticated and confirm messages.
-    variable_set('tfa_basic_roles_require', array(BACKDROP_AUTHENTICATED_ROLE => BACKDROP_AUTHENTICATED_ROLE));
+    config_set('tfa_basic.settings', 'tfa_basic_roles_require', array(BACKDROP_AUTHENTICATED_ROLE => BACKDROP_AUTHENTICATED_ROLE));
     $this->backdropGet('user/' . $account->uid . '/security/tfa/disable');
     $this->assertText($this->uiStrings('disable-required'));
     // Disable TFA.

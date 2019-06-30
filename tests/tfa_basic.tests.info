@@ -1,0 +1,5 @@
+[TfaBasicTestCase]
+name = TFA Basic tests
+description = Test the TFA basic plugins.
+group = TFA
+file = tfa_basic.test

@@ -28,7 +28,7 @@ function tfa_basic_overview($form, &$form_state, $account) {
 
   // Start with validate plugin setup.
   if (!$enabled) {
-    $validate_plugin = config_get('tfa_basic.settings', 'tfa_validate_plugin');
+    $validate_plugin = config_get('tfa.settings', 'tfa_validate_plugin');
     $output['setup'] = _tfa_basic_plugin_setup_form_overview($validate_plugin, $account, $user_tfa);
   }
   else {
@@ -57,9 +57,9 @@ function tfa_basic_overview($form, &$form_state, $account) {
  */
 function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tfa) {
   // No output if the plugin isn't enabled.
-  if ($plugin !== config_get('tfa_basic.settings', 'tfa_validate_plugin') &&
-    !in_array($plugin, config_get('tfa_basic.settings', 'tfa_fallback_plugins')) &&
-    !in_array($plugin, config_get('tfa_basic.settings', 'tfa_login_plugins'))) {
+  if ($plugin !== config_get('tfa.settings', 'tfa_validate_plugin') &&
+    !in_array($plugin, config_get('tfa.settings', 'tfa_fallback_plugins')) &&
+    !in_array($plugin, config_get('tfa.settings', 'tfa_login_plugins'))) {
     return array();
   }
   $enabled = isset($user_tfa['status']) && $user_tfa['status'] ? TRUE : FALSE;
@@ -681,9 +681,9 @@ function _tfa_basic_full_setup_steps() {
     'tfa_basic_recovery_code',
   );
   foreach ($plugins as $plugin) {
-    if ($plugin === config_get('tfa_basic.settings', 'tfa_validate_plugin') ||
-      in_array($plugin, config_get('tfa_basic.settings', 'tfa_fallback_plugins')) ||
-      in_array($plugin, config_get('tfa_basic.settings', 'tfa_login_plugins'))) {
+    if ($plugin === config_get('tfa.settings', 'tfa_validate_plugin') ||
+      in_array($plugin, config_get('tfa.settings', 'tfa_fallback_plugins')) ||
+      in_array($plugin, config_get('tfa.settings', 'tfa_login_plugins'))) {
       $steps[] = $plugin;
     }
   }

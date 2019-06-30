@@ -8,7 +8,7 @@
     "tfa_basic_roles_require": [],
     "tfa_basic_time_skew": 3,
     "tfa_recovery_codes_amount": 10,
-    "tfa_basic_accepted_code_expiration": 2592000,
+    "tfa_basic_accepted_code_expiration": 86400,
     "tfa_basic_trust_cookie_expiration": 2592000,
     "tfa_basic_name_prefix": "Backdrop",
     "tfa_basic_twilio_account_sid": "",

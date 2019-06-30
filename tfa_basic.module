@@ -325,8 +325,8 @@ function tfa_basic_tfa_required($account) {
   $required = FALSE;
   $required_roles = config_get('tfa_basic.settings', 'tfa_basic_roles_require');
   if (!empty($required_roles)) {
-    foreach ($required_roles as $rid => $enabled) {
-      if ($enabled && array_key_exists($rid, $account->roles)) {
+    foreach ($required_roles as $enabled) {
+      if ($enabled && in_array($enabled, $account->roles)) {
         $required = TRUE;
         break;
       }
