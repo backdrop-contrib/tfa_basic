@@ -8,42 +8,44 @@ https://github.com/backdrop-contrib/tfa_basic/issues/
 
 ## Plugins
 
- * TOTP
+* TOTP
  A Time-based One Time Password plugin using PHP_Gansta\GoogleAuthenticator
  PHP library.
 
- * Trusted Browsers
+* Trusted Browsers
  A TFA login plugin allowing browsers to be marked "trusted" so that subsequent
  logins will not require TFA for a 30 day window.
 
- * Recovery Codes
+* Recovery Codes
  Pre-generated one-time-use codes.
 
- * Twilio SMS
+* Twilio SMS
  Optional plugin for sending TFA codes via SMS messages. See SMS section below.
 
 ## Variables
 
- * tfa_basic_secret_key
+* `tfa_basic_secret_key`
  Secret key to to use as encryption key for TOTP seed encryption. Should be set
- in settings.php and not in the Backdrop database.
+ in settings.php and not in the Backdrop database. For example:
 
- * tfa_basic_time_skew
+  `$settings['tfa_basic_secret_key'] = '1234567890';`
+
+* `tfa_basic_time_skew`
  Number of 30 second chunks to allow TOTP keys between.
 
- * tfa_basic_name_prefix
+* `tfa_basic_name_prefix`
  Prefix for TOTP QR code names. Suffix is account username.
 
- * tfa_basic_cookie_name
+* `tfa_basic_cookie_name`
  Cookie name of TFA trusted browser cookie. Default is "TB".
 
- * tfa_basic_cookie_domain
+* `tfa_basic_cookie_domain`
  Cookie domain for TFA trusted browser cookie.
 
- * tfa_basic_trust_cookie_expiration
+* `tfa_basic_trust_cookie_expiration`
  How long before TFA cookies expire. Default is 30 days.
 
- * tfa_basic_accepted_code_expiration
+* `tfa_basic_accepted_code_expiration`
  How long before accepted TOTP codes expire. Default is 1 day.
 
 ## Using qrcode.js library instead of Google images
@@ -56,8 +58,8 @@ will create the QR code image without leaking information to third-party sites.
 To enable qrcode.js you simply have to place the library in the
 tfa_basic/includes directory. From the command line:
 
-  cd tfa_basic/includes/
-  git clone https://github.com/davidshimjs/qrcodejs.git
+  `cd tfa_basic/includes/`
+  `git clone https://github.com/davidshimjs/qrcodejs.git`
 
 The qrcode.min.js file should be at tfa_basic/includes/qrcodejs/qrcode.min.js
 
@@ -65,6 +67,9 @@ No additional setup is necessary, if the file exists in the right location then
 it will be used.
 
 ## Using SMS for TFA codes
+
+*Currently disabled until https://www.drupal.org/project/tfa_basic/issues/2997261
+is resolved.*
 
 Prerequisites:
 
@@ -88,9 +93,9 @@ Such that the file tfa_basic/includes/twilio-php/Services/Twilio.php exists.
 
 Option 2, install via Backdrop Libraries API:
 
- 1. Install Backdrop Libraries API: https://www.backdropcms.org/project/libraries
- 2. Download the Twilio PHP library from (http://www.twilio.com/docs/libraries).
- 3. Extract the library in your sites/all/libraries folder and rename the
+1. Install Backdrop Libraries API: https://www.backdropcms.org/project/libraries
+2. Download the Twilio PHP library from (http://www.twilio.com/docs/libraries).
+3. Extract the library in your `/libraries` folder and rename the
     directory to 'twilio'.
 
 ### Account mobile phone numbers
@@ -106,7 +111,7 @@ of code to integrate with TFA Basic.
 First, set the variable tfa_basic_phone_field to FALSE. This will inform TFA
 Basic that you are using custom storage.
 
-  drush vset tfa_basic_phone_field FALSE
+  `drush vset tfa_basic_phone_field FALSE`
 
 Finally, implement hook_tfa_basic_get_mobile_number_alter() in a custom module.
 The sole argument is an array with elements 'account' and 'number'. 'account' is
@@ -121,8 +126,8 @@ storage.
 
 #### Handling numbers that are not NANP
 
-* Implement hook_tfa_basic_valid_number_alter() for number validation
-* Implement hook_tfa_basic_format_number_alter() for formatting number output
+* Implement `hook_tfa_basic_valid_number_alter()` for number validation
+* Implement `hook_tfa_basic_format_number_alter()` for formatting number output
 
 ## License
 
