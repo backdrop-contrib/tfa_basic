@@ -26,7 +26,7 @@ https://github.com/backdrop-contrib/tfa_basic/issues/
 
 * `tfa_basic_secret_key`
  Secret key to to use as encryption key for TOTP seed encryption. Should be set
- in settings.php and not in the Backdrop database. For example:
+ in settings file. For example:
 
   `$settings['tfa_basic_secret_key'] = '1234567890';`
 
@@ -37,7 +37,10 @@ https://github.com/backdrop-contrib/tfa_basic/issues/
  Prefix for TOTP QR code names. Suffix is account username.
 
 * `tfa_basic_cookie_name`
- Cookie name of TFA trusted browser cookie. Default is "TB".
+ Cookie name of TFA trusted browser cookie. Default is "TB". Rarely needs to be
+ changed but can set in settings file:
+
+ `$settings['tfa_basic_cookie_name'] = 'mycookie';`
 
 * `tfa_basic_cookie_domain`
  Cookie domain for TFA trusted browser cookie.

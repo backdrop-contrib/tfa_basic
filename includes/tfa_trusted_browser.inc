@@ -31,7 +31,7 @@ class TfaTrustedBrowser extends TfaBasePlugin implements TfaLoginPluginInterface
 
   public function __construct(array $context) {
     parent::__construct($context);
-    $this->cookieName = config_get('tfa_basic.settings', 'tfa_basic_cookie_name');
+    $this->cookieName = settings_get('tfa_basic_cookie_name', 'TB');
     $this->domain = config_get('tfa_basic.settings', 'tfa_basic_cookie_domain');
     // Expiration defaults to 30 days.
     $this->expiration = config_get('tfa_basic.settings', 'tfa_basic_trust_cookie_expiration');
