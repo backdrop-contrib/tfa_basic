@@ -190,7 +190,8 @@ function tfa_basic_update_last_removed() {
  */
 function tfa_basic_update_1000() {
   // Migrate variables to config.
-  $config = config('tfa.settings');
+  $config = config('tfa_basic.settings');
+  $config->set('_config_translatables', array('tfa_basic_help_text', 'tfa_basic_twilio_message_text'));
   $config->set('tfa_basic_time_skew', update_variable_get('tfa_basic_time_skew', 3));
   $config->set('tfa_basic_roles_require', update_variable_get('tfa_basic_roles_require', array()));
   $config->set('tfa_recovery_codes_amount', update_variable_get('tfa_recovery_codes_amount', 10));
