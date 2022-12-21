@@ -24,9 +24,9 @@ function tfa_basic_config_info() {
 }
 
 /**
- * Implements hook_library().
+ * Implements hook_library_info().
  */
-function tfa_basic_library() {
+function tfa_basic_library_info() {
   $items = array();
   $items['qrcodejs'] = array(
     'title' => 'QRCode.js',
