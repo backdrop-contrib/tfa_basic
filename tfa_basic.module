@@ -71,6 +71,8 @@ function tfa_basic_autoload_info() {
     'TfaBasicRecoveryCodeSetup' => 'includes/tfa_recovery.inc',
     'TfaBasicSms' => 'includes/tfa_sms.inc',
     'TfaBasicSmsSetup' => 'includes/tfa_sms.inc',
+    'TfaBasicEmail' => 'includes/tfa_email.inc',
+    'TfaBasicEmailSetup' => 'includes/tfa_email.inc',
     'TfaBasicHelp' => 'includes/tfa_help.inc',
     'PHPGangsta_GoogleAuthenticator' => 'includes/googleauthenticator/GoogleAuthenticator.php',
     //'' => 'includes/twilio-php/Services/Twilio.php',
@@ -206,6 +208,10 @@ function tfa_basic_tfa_api() {
       'class' => 'TfaBasicSms',
       'name' => 'Twilio SMS',
     ),
+    'tfa_basic_email' => array(
+      'class' => 'TfaBasicEmail',
+      'name' => 'Email',
+    ),
     'tfa_basic_help' => array(
       'class' => 'TfaBasicHelp',
       'name' => 'Help page',
@@ -254,6 +260,16 @@ function tfa_basic_sms_create($context) {
   $number = tfa_basic_get_mobile_number($account);
   $client = tfa_basic_get_twilio_client();
   return new TfaBasicSms($context, $number, $client);
+}
+
+/**
+ * Create TfaBasicEmail plugin.
+ *
+ * @param array $context
+ * @return TfaBasicEmail
+ */
+function tfa_basic_email_create($context) {
+  return new TfaBasicEmail($context);
 }
 
 /**
@@ -782,6 +798,10 @@ function tfa_basic_mail($key, &$message, $params) {
       $message['body']['body'] = tfa_basic_tfa_disabled_body($message, $params);
       break;
 
+    case 'tfa_basic_email':
+      $message['subject'] = t('Verification code for your @site_name account', array('@site_name' => config_get('system.core', 'site_name')));
+      $message['body']['body'] = tfa_basic_tfa_email_message_body($message, $params);
+      break;
   }
 }
 
@@ -831,4 +851,23 @@ If you did not take this action, please contact a site administrator immediately
 -- @site_name team", array('@site_name' => config_get('system.core', 'site_name')));
 
   return token_replace($text, array('user' => $params['account']), array('language' => $message['language'], 'sanitize' => FALSE, 'clear' => TRUE));
+}
+
+/**
+ * Returns text appropriate for an email when someone has disabled tfa.
+ *
+ * @param array $message
+ *   The message, must include the language.
+ * @param array $params
+ *   Parameters from backdrop_mail. Must include the account.
+ *
+ * @return string
+ *   Message body.
+ */
+function tfa_basic_tfa_email_message_body($message, $params) {
+  $langcode = $message['language']->langcode;
+  $args = array('@site_name' => config_get('system.core', 'site_name'), '!code' => $params['code']);
+  $text = config('tfa_basic.settings')->getTranslated('tfa_basic_email_message_text', $args, array('langcode' => $langcode));
+  $variables = array('user' => $params['account']);
+  return token_replace($text, $variables, array('language' => $message['language'], 'sanitize' => FALSE, 'clear' => TRUE));
 }

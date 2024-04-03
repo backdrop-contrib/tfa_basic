@@ -36,6 +36,8 @@ function tfa_basic_overview($form, &$form_state, $account) {
     $output['app'] = _tfa_basic_plugin_setup_form_overview('tfa_basic_totp', $account, $user_tfa);
     // SMS setup.
     $output['sms'] = _tfa_basic_plugin_setup_form_overview('tfa_basic_sms', $account, $user_tfa);
+    // Email setup.
+    $output['email'] = _tfa_basic_plugin_setup_form_overview('tfa_basic_email', $account, $user_tfa);
     // Trusted browsers.
     $output['trust'] = _tfa_basic_plugin_setup_form_overview('tfa_basic_trusted_browser', $account, $user_tfa);
     // Recovery codes.
@@ -126,6 +128,20 @@ function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tf
           '#markup' => '<p><em>' . t('Not available for use') . '</em></p>',
         );
       }
+      break;
+
+    case 'tfa_basic_email':
+      $output = array(
+        'heading' => array(
+          '#theme' => 'html_tag',
+          '#tag' => 'h3',
+          '#value' => t('Email'),
+        ),
+      );
+      $output['email'] = array(
+        '#type' => 'markup',
+        '#markup' => '<p>' . t('Email to account email address: @email', array('@email' => $account->mail)) . '</p>',
+      );
       break;
 
     case 'tfa_basic_trusted_browser':
@@ -465,6 +481,14 @@ function tfa_basic_setup_form($form, &$form_state, $account, $method = 'tfa_basi
         }
         break;
 
+      case 'tfa_basic_email':
+        backdrop_set_title(t('TFA setup - Email'));
+        $setup_plugin = new TfaBasicEmailSetup($context);
+        $tfa_setup = new TfaSetup($setup_plugin, $context);
+        $form = $tfa_setup->getForm($form, $form_state);
+        $form_state['storage'][$method] = $tfa_setup;
+        break;
+
       // List previously saved recovery codes. Note, this is not a plugin.
       case 'recovery_codes_list':
         $recovery = new TfaBasicRecoveryCodeSetup(array('uid' => $account->uid));
@@ -670,13 +694,14 @@ function tfa_basic_setup_form_submit($form, &$form_state) {
 }
 
 /**
- * Steps eligble for TFA Basic setup.
+ * Steps eligible for TFA Basic setup.
  */
 function _tfa_basic_full_setup_steps() {
   $steps = array();
   $plugins = array(
     'tfa_basic_totp',
     'tfa_basic_sms',
+    'tfa_basic_email',
     'tfa_basic_trusted_browser',
     'tfa_basic_recovery_code',
   );
@@ -706,6 +731,10 @@ function _tfa_basic_set_next_step(&$form_state, $this_step, $skipped_step = FALS
 
       case 'tfa_basic_sms':
         $output = $skipped_step ? t('SMS code delivery not enabled.') : t('SMS code verified.');
+        break;
+
+      case 'tfa_basic_email':
+        $output = $skipped_step ? t('Email code delivery enabled.') : t('Email code delivery enabled.');
         break;
 
       case 'tfa_basic_trusted_browser':

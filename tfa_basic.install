@@ -228,3 +228,15 @@ function tfa_basic_update_1000() {
   update_variable_del('tfa_basic_phone_field');
   update_variable_del('tfa_basic_help_text');
 }
+
+/**
+ * Set email message.
+ */
+function tfa_basic_update_1001() {
+  $config = config('tfa_basic.settings');
+  $translatables = $config->get('_config_translatables');
+  $translatables[] = 'tfa_basic_email_message_text';
+  $config->set('_config_translatables', $translatables);
+  $config->set('tfa_basic_email_message_text', update_variable_get('tfa_basic_email_message_text', "[user:name],\n\nYour verfication code is !code.\n\nIf you did not take this action, please contact a site administrator immediately.\n\n-- @site_name team"));
+  $config->save();
+}
