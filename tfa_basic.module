@@ -148,6 +148,15 @@ function tfa_basic_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'tfa_basic.pages.inc',
   );
+  $items['user/%user/security/tfa/email-setup'] = array(
+    'title' => 'TFA setup',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('tfa_basic_setup_form', 1, 'tfa_basic_email'),
+    'access callback' => 'tfa_basic_setup_access',
+    'access arguments' => array(1, 'setup own tfa'),
+    'type' => MENU_CALLBACK,
+    'file' => 'tfa_basic.pages.inc',
+  );
 
   return $items;
 }
@@ -480,6 +489,7 @@ function tfa_basic_setup_save_data($account, $data = array()) {
     $tfa_data = array(
       'plugins' => '',
       'sms' => FALSE,
+      'email' => FALSE,
     );
   }
   if (isset($data['plugins'])) {
@@ -487,6 +497,9 @@ function tfa_basic_setup_save_data($account, $data = array()) {
   }
   if (isset($data['sms'])) {
     $tfa_data['sms'] = $data['sms'];
+  }
+  if (isset($data['email'])) {
+    $tfa_data['email'] = $data['email'];
   }
   $status = 1;
   if (isset($data['status']) && $data['status'] === FALSE) {

@@ -94,7 +94,7 @@ class TfaBasicEmail extends TfaBasePlugin implements TfaValidationPluginInterfac
         backdrop_set_message(t('Unable to email the code. Please contact support.'), 'error');
       }
       else {
-        backdrop_set_message(t('Code resent'));
+        backdrop_set_message(t('Code resent.'));
       }
       return FALSE;
     }
@@ -174,8 +174,9 @@ class TfaBasicEmail extends TfaBasePlugin implements TfaValidationPluginInterfac
    * {@inheritdoc}
    */
   public function ready() {
+    $tfa_data = tfa_basic_get_tfa_data($this->account);
     // We can only send a code if there is an email.
-    if (!empty($this->email)) {
+    if (!empty($this->email) && !empty($tfa_data['data']['email'])) {
       return TRUE;
     }
     return FALSE;
@@ -197,7 +198,7 @@ class TfaBasicEmailSetup extends TfaBasicEmail implements TfaSetupPluginInterfac
       $this->code = $this->generate();
       if (!$this->sendCode($this->code)) {
         // @todo decide on error text
-        $this->errorMessages[''] = t('Unable to email code to your email.');
+        $this->errorMessages[''] = t('Unable to email code to your email address.');
       }
     }
   }
@@ -206,23 +207,41 @@ class TfaBasicEmailSetup extends TfaBasicEmail implements TfaSetupPluginInterfac
    * @copydoc TfaSetupPluginInterface::getSetupForm()
    */
   public function getSetupForm(array $form, array &$form_state) {
-    $this->code = $this->generate();
-    if (!$this->sendCode($this->code)) {
-      backdrop_set_message(t('Unable to email the code. Please contact support.'), 'error');
+    $tfa_data = tfa_basic_get_tfa_data($this->account);
+
+    if (!empty($tfa_data['data']['email'])) {
+      // Provide disable Email option.
+      $form['actions']['email_disable'] = array(
+        '#type' => 'submit',
+        '#value' => t('Disable Email delivery'),
+      );
     }
     else {
-      backdrop_set_message(t('Code sent'));
+      $this->code = $this->generate();
+      if (!$this->sendCode($this->code)) {
+        backdrop_set_message(t('Unable to email the code. Please contact support.'), 'error');
+      }
+      else {
+        backdrop_set_message(t('A code was sent to @email. It may take a minute for its arrival.', array('@email' => $this->account->mail)));
+      }
+      $form['email_code'] = array(
+        '#type' => 'number',
+        '#title' => t('Verification Code'),
+        '#required' => TRUE,
+        '#description' => t('Enter @length-character code sent to your email.', array('@length' => $this->codeLength)),
+      );
+      $form['actions']['verify'] = array(
+        '#type' => 'submit',
+        '#value' => t('Verify and save'),
+      );
     }
-    $form['email_code'] = array(
-      '#type' => 'number',
-      '#title' => t('Verification Code'),
-      '#required' => TRUE,
-      '#description' => t('Enter @length-character code sent to your email.', array('@length' => $this->codeLength)),
-    );
-    $form['actions']['verify'] = array(
-      '#type' => 'submit',
-      '#value' => t('Verify and save'),
-    );
+
+    if (isset($form_state['storage']['full_setup'])) {
+      backdrop_set_message(t("If the code does not arrive or you entered the wrong number skip this step to continue without Email delivery. You can enable it after completing the rest of TFA setup."));
+    }
+    elseif(empty($tfa_data['data']['email'])) {
+      $form['email_code']['#description'] .= ' ' . l(t('If the code does not arrive or you entered the wrong number click here to start over.'), 'user/' . $this->account->uid . '/security/tfa/email-setup');
+    }
 
     return $form;
   }
@@ -231,23 +250,34 @@ class TfaBasicEmailSetup extends TfaBasicEmail implements TfaSetupPluginInterfac
    * @copydoc TfaSetupPluginInterface::validateSetupForm()
    */
   public function validateSetupForm(array $form, array &$form_state) {
-    if (!$this->validate($form_state['values']['email_code'])) {
-      $this->errorMessages['email_code'] = t('Invalid code. Please try again.');
-      return FALSE;
+    // Verify the code.
+    if (isset($form_state['values']['email_code'])) {
+      if (!$this->validate($form_state['values']['email_code'])) {
+        $this->errorMessages['email_code'] = t('Invalid code. Please try again.');
+        return FALSE;
+      }
     }
-    else {
-      return TRUE;
-    }
+    // Just disable it.
+    return TRUE;
   }
 
   /**
    * @copydoc TfaSetupPluginInterface::submitSetupForm()
    */
   public function submitSetupForm(array $form, array &$form_state) {
-    // No submission handling required.
-    // @todo save to account that email is enabled or not.
-    // tfa_basic_setup_save_data($account, array('email' => FALSE));
-    // Or if not skipped then save as TRUE.
+    // Disable Email delivery.
+    if (isset($form_state['values']['email_disable']) && $form_state['values']['op'] === $form_state['values']['email_disable']) {
+      tfa_basic_setup_save_data($this->account, array('email' => FALSE));
+      backdrop_set_message(t('TFA Email delivery disabled.'));
+      $form_state['redirect'] = 'user/' . $this->account->uid . '/security/tfa';
+      watchdog('tfa_basic', 'TFA Email disabled for user @name UID !uid', array(
+        '@name' => $this->account->name,
+        '!uid' => $this->account->uid,
+      ), WATCHDOG_INFO);
+    }
+    else {
+      tfa_basic_setup_save_data($this->account, array('email' => TRUE));
+    }
     return TRUE;
   }
 

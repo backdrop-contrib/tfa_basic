@@ -131,16 +131,26 @@ function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tf
       break;
 
     case 'tfa_basic_email':
-      $output = array(
-        'heading' => array(
-          '#theme' => 'html_tag',
-          '#tag' => 'h3',
-          '#value' => t('Email'),
-        ),
-      );
-      $output['email'] = array(
+      if (empty($user_tfa['data']['email'])) {
+        $email_text = t('Enable Email delivery');
+      }
+      else {
+        $email_text = t('Reset Email delivery');
+        $output = array(
+          'heading' => array(
+            '#theme' => 'html_tag',
+            '#tag' => 'h3',
+            '#value' => t('Email'),
+          ),
+        );
+        $output['email'] = array(
+          '#type' => 'markup',
+          '#markup' => '<p>' . t('Email to account email address: @email', array('@email' => $account->mail)) . '</p>',
+        );
+      }
+      $output['link'] = array(
         '#type' => 'markup',
-        '#markup' => '<p>' . t('Email to account email address: @email', array('@email' => $account->mail)) . '</p>',
+        '#markup' => l($email_text, 'user/' . $account->uid . '/security/tfa/email-setup'),
       );
       break;
 
@@ -734,7 +744,7 @@ function _tfa_basic_set_next_step(&$form_state, $this_step, $skipped_step = FALS
         break;
 
       case 'tfa_basic_email':
-        $output = $skipped_step ? t('Email code delivery enabled.') : t('Email code delivery enabled.');
+        $output = $skipped_step ? t('Email code delivery not enabled.') : t('Email code delivery enabled.');
         break;
 
       case 'tfa_basic_trusted_browser':
