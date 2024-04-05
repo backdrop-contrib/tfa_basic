@@ -13,7 +13,7 @@ class TfaBasicHelp extends TfaBasePlugin implements TfaValidationPluginInterface
    * @copydoc TfaBasePlugin::getForm()
    */
   public function getForm(array $form, array &$form_state) {
-    $content = config_get_translated('tfa_basic_help_text');
+    $content = config_get_translated('tfa_basic.settings', 'tfa_basic_help_text');
     $form['help'] = array(
       '#type' => 'markup',
       '#markup' => check_plain($content),
