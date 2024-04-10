@@ -237,10 +237,10 @@ class TfaBasicEmailSetup extends TfaBasicEmail implements TfaSetupPluginInterfac
     }
 
     if (isset($form_state['storage']['full_setup'])) {
-      backdrop_set_message(t("If the code does not arrive or you entered the wrong number skip this step to continue without Email delivery. You can enable it after completing the rest of TFA setup."));
+      backdrop_set_message(t("If the code does not arrive skip this step to continue without Email delivery. You can enable it after completing the rest of TFA setup."));
     }
     elseif(empty($tfa_data['data']['email'])) {
-      $form['email_code']['#description'] .= ' ' . l(t('If the code does not arrive or you entered the wrong number click here to start over.'), 'user/' . $this->account->uid . '/security/tfa/email-setup');
+      $form['email_code']['#description'] .= ' ' . l(t('If the code does not arrive click here to start over.'), 'user/' . $this->account->uid . '/security/tfa/email-setup');
     }
 
     return $form;
