@@ -228,3 +228,12 @@ function tfa_basic_update_1000() {
   update_variable_del('tfa_basic_phone_field');
   update_variable_del('tfa_basic_help_text');
 }
+
+/**
+ * Create skip validation variable.
+ */
+function tfa_basic_update_1001() {
+  $config = config('tfa_basic.settings');
+  $config->set('tfa_basic_validation_skip', 3);
+  $config->save();
+}

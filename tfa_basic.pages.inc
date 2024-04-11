@@ -303,7 +303,7 @@ function tfa_basic_disable_form_submit($form, &$form_state) {
     return;
   }
   $params = array('account' => $account);
-  tfa_basic_setup_save_data($account, array('status' => FALSE));
+  tfa_basic_setup_save_data($account, array('status' => FALSE, 'plugins' => array()));
   // Delete TOTP code.
   $totp = new TfaTotp(array('uid' => $account->uid));
   $totp->deleteSeed();
@@ -642,7 +642,7 @@ function tfa_basic_setup_form_submit($form, &$form_state) {
       if ($form_state['storage']['sms_number'] !== tfa_basic_get_mobile_number($account)) {
         tfa_basic_set_mobile_number($account, $form_state['storage']['sms_number']);
       }
-      tfa_basic_setup_save_data($account, array('sms' => TRUE));
+      tfa_basic_setup_save_data($account, array('status' => TRUE, 'sms' => TRUE));
     }
 
     // Return if multi-step.
@@ -656,6 +656,7 @@ function tfa_basic_setup_form_submit($form, &$form_state) {
     // Log and notify if this was full setup.
     if (!empty($form_state['storage']['full_setup'])) {
       $data = array(
+        'status' => TRUE,
         'plugins' => array_diff($form_state['storage']['steps'], $form_state['storage']['steps_skipped']),
       );
       tfa_basic_setup_save_data($account, $data);
