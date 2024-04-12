@@ -3,4 +3,4 @@ description = "TFA plugins for Time-based One Time Passwords, Trusted Browsers, 
 backdrop = 1.x
 type = module
 
-dependencies[] = tfa (> 1.x-2.2.0)
+dependencies[] = tfa (>= 1.x-2.2.0)
