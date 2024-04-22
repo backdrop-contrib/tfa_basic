@@ -234,6 +234,9 @@ function tfa_basic_update_1000() {
  */
 function tfa_basic_update_1001() {
   $config = config('tfa_basic.settings');
+  if ($config->get('tfa_basic_validation_skip') != NULL) {
+    return;
+  }
   $config->set('tfa_basic_validation_skip', 3);
   $config->save();
 }
