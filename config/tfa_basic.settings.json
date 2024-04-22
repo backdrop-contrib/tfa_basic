@@ -18,5 +18,5 @@
     "tfa_basic_sms_nanp_validate": 1,
     "tfa_basic_phone_field": "",
     "tfa_basic_help_text": "Contact support to reset your access",
-    "tda_basic_validation_skip": 3
+    "tfa_basic_validation_skip": 3
 }

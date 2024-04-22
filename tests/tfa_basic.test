@@ -26,15 +26,18 @@ class TfaBasicTestCase extends BackdropWebTestCase {
   protected $seed;
 
   /**
-   * @var stdClass
+   * @var User
    */
   protected $web_user;
 
   /**
-   * @var stdClass
+   * @var User
    */
   protected $admin_user;
 
+  /**
+   * {inheritdoc}
+   */
   public function setUp() {
     // Enable TFA module and the test module.
     parent::setUp('tfa', 'tfa_basic');
@@ -45,6 +48,9 @@ class TfaBasicTestCase extends BackdropWebTestCase {
     $this->admin_user = $this->backdropCreateUser(array('access content', 'administer users'));
   }
 
+  /**
+   * Test TFA Basic.
+   */
   public function testTfaBasic() {
     // Use one test function to allow accounts to carry through testing.
     $this->_testAppAndRecoverySetup();
@@ -177,6 +183,9 @@ class TfaBasicTestCase extends BackdropWebTestCase {
     $this->assertText('My account');
   }
 
+  /**
+   * Test admin disable.
+   */
   public function _testAdminDisable() {
     $this->backdropLogin($this->admin_user);
 
@@ -194,6 +203,9 @@ class TfaBasicTestCase extends BackdropWebTestCase {
     $this->assertText($this->uiStrings('tfa-disabled'));
   }
 
+  /**
+   * Test TOTP Replay.
+   */
   public function testTotpReplay() {
     config_set('tfa.settings', 'tfa_enabled', TRUE);
     config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_basic_totp');
@@ -270,9 +282,13 @@ class TfaBasicTestCase extends BackdropWebTestCase {
     $this->assertText('My account');
   }
 
+  /**
+   * Test required.
+   */
   public function testRequired() {
     config_set('tfa.settings', 'tfa_enabled', TRUE);
     config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_basic_totp');
+    config_set('tfa_basic.settings', 'tfa_basic_validation_skip', 0);
     $account = $this->backdropCreateUser(array('access content', 'setup own tfa'));
     $edit = array(
       'name' => $account->name,
@@ -305,6 +321,40 @@ class TfaBasicTestCase extends BackdropWebTestCase {
     $this->assertText($this->uiStrings('disable-required'));
     // Disable TFA.
     $this->backdropPost(NULL, $pass_form, 'Disable');
+    $this->backdropGet('user/logout');
+
+    // Confirm cannot log in.
+    $this->backdropPost('user/login', $edit, 'Log in');
+    $this->assertNoLink('Log out', 'Not authenticated');
+    $this->assertText($this->uiStrings('required'), 'Required text shows');
+  }
+
+  /**
+   * Test the skip validation.
+   */
+  public function testSkipRequired() {
+    config_set('tfa.settings', 'tfa_enabled', TRUE);
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_basic_totp');
+    config_set('tfa_basic.settings', 'tfa_basic_roles_require', array(
+      'authenticated' => 'authenticated',
+    ));
+    config_set('tfa_basic.settings', 'tfa_basic_validation_skip', 3);
+    $account = $this->backdropCreateUser(array('access content', 'setup own tfa'));
+    $edit = array(
+      'name' => $account->name,
+      'pass' => $account->pass_raw,
+    );
+
+    $this->backdropPost('user/login', $edit, 'Log in');
+    $this->assertText('You have 2 attempts left.', '2 attempts left');
+    $this->backdropGet('user/logout');
+
+    $this->backdropPost('user/login', $edit, 'Log in');
+    $this->assertText('You have 1 attempt left.', '1 attempt left');
+    $this->backdropGet('user/logout');
+
+    $this->backdropPost('user/login', $edit, 'Log in');
+    $this->assertText('You have 0 attempts left.', '0 attempts left');
     $this->backdropGet('user/logout');
 
     // Confirm cannot log in.

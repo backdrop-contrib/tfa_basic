@@ -168,8 +168,10 @@ function tfa_basic_setup_access($account, $permission = '') {
  * Implements hook_cron().
  */
 function tfa_basic_cron() {
+  $config = config('tfa_basic.settings');
+
   // Delete trusted browser entries older than expiration.
-  $expiration = config_get('tfa_basic.settings', 'tfa_basic_trust_cookie_expiration');
+  $expiration = $config->get('tfa_basic_trust_cookie_expiration');
 
   $num_deleted = db_delete('tfa_trusted_browser')
     ->condition('created', REQUEST_TIME - $expiration, '<')
@@ -179,7 +181,7 @@ function tfa_basic_cron() {
   }
 
   // Delete accepted codes older than expiration.
-  $accepted_expiration = config_get('tfa_basic.settings', 'tfa_basic_accepted_code_expiration');
+  $accepted_expiration = $config->get('tfa_basic_accepted_code_expiration');
   db_delete('tfa_accepted_code')
     ->condition('time_accepted', REQUEST_TIME - $accepted_expiration, '<')
     ->execute();
@@ -268,8 +270,9 @@ function tfa_basic_get_twilio_client() {
   if (!class_exists('Services_Twilio')) {
     return FALSE;
   }
-  $sid = config_get('tfa_basic.settings', 'tfa_basic_twilio_account_sid');
-  $token = config_get('tfa_basic.settings', 'tfa_basic_twilio_account_token');
+  $config = config('tfa_basic.settings');
+  $sid = $config->get('tfa_basic_twilio_account_sid');
+  $token = $config->get('tfa_basic_twilio_account_token');
   return new Services_Twilio($sid, $token);
 }
 
@@ -680,12 +683,13 @@ function tfa_basic_format_number($number) {
 function tfa_basic_form_tfa_admin_settings_alter(&$form, &$form_state, $form_id) {
   global $cookie_domain;
   $twilio_available = FALSE;
+  $config = config('tfa_basic.settings');
 
   $form['tfa_basic_validation_skip'] = array(
     '#type' => 'number',
     '#title' => t('Skip validation'),
     '#description' => t('Number of times a user without having set up TFA validation can login.'),
-    '#default_value' => (int) config_get('tfa_basic.settings', 'tfa_basic_validation_skip'),
+    '#default_value' => (int) $config->get('tfa_basic_validation_skip'),
     '#min' => 0,
     '#max' => 10,
   );
@@ -695,11 +699,11 @@ function tfa_basic_form_tfa_admin_settings_alter(&$form, &$form_state, $form_id)
     '#title' => t('Roles required to have set up TFA'),
     '#description' => t("Login will be denied to an account without TFA setup and any matching role."),
     '#options' => user_roles(TRUE),
-    '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_roles_require'),
+    '#default_value' => $config->get('tfa_basic_roles_require'),
   );
 
   // Add cookie domain field to TFA admin settings.
-  $tfa_basic_cookie_domain = config_get('tfa_basic.settings', 'tfa_basic_cookie_domain');
+  $tfa_basic_cookie_domain = $config->get('tfa_basic_cookie_domain');
   $form['tfa_basic_cookie_domain'] = array(
     '#type' => 'textfield',
     '#title' => t('Cookie domain'),
@@ -731,41 +735,41 @@ function tfa_basic_form_tfa_admin_settings_alter(&$form, &$form_state, $form_id)
     $form['tfa_basic_twilio_account_sid'] = array(
       '#type' => 'textfield',
       '#title' => t('Twilio account SID'),
-      '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_twilio_account_sid'),
+      '#default_value' => $config->get('tfa_basic_twilio_account_sid'),
       '#description' => t('Twilio account SID from twilio.com.'),
       '#states' => $sms_states
     );
     $form['tfa_basic_twilio_account_token'] = array(
       '#type' => 'textfield',
       '#title' => t('Twilio account token'),
-      '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_twilio_account_token'),
+      '#default_value' => $config->get('tfa_basic_twilio_account_token'),
       '#description' => t('Private Twilio account token from twilio.com.'),
       '#states' => $sms_states
     );
     $form['tfa_basic_twilio_account_number'] = array(
       '#type' => 'textfield',
       '#title' => t('Twilio account number'),
-      '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_twilio_account_number'),
+      '#default_value' => $config->get('tfa_basic_twilio_account_number'),
       '#description' => t('Private Twilio account number from twilio.com.'),
       '#states' => $sms_states
     );
     $form['tfa_basic_twilio_message_text'] = array(
       '#type' => 'textfield',
       '#title' => t('Twilio message text'),
-      '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_twilio_message_text'),
+      '#default_value' => $config->get('tfa_basic_twilio_message_text'),
       '#description' => t('Text to be sent to the user. Use !code for the verification code.'),
       '#states' => $sms_states
     );
     $form['tfa_basic_sms_nanp_validate'] = array(
       '#type' => 'checkbox',
       '#title' => t('Validate phone numbers against NANP'),
-      '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_sms_nanp_validate'),
+      '#default_value' => $config->get('tfa_basic_sms_nanp_validate'),
       '#description' => t('If enabled phone numbers will be checked against the North American Numbering Plan.'),
       '#states' => $sms_states
     );
 
     // Mobile phone storage field. Set variable to FALSE to ignore.
-    $phone_field = config_get('tfa_basic.settings', 'tfa_basic_phone_field');
+    $phone_field = $config->get('tfa_basic_phone_field');
     if ($phone_field !== FALSE) {
       $form['tfa_basic_phone_field'] = array(
         '#title' => t('SMS mobile number'),
@@ -800,7 +804,7 @@ function tfa_basic_form_tfa_admin_settings_alter(&$form, &$form_state, $form_id)
   $form['tfa_basic_help_text'] = array(
     '#type' => 'textfield',
     '#title' => t('Help page text'),
-    '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_help_text'),
+    '#default_value' => $config->get('tfa_basic_help_text'),
     '#description' => t('Text to display on help page. Plain text only.'),
     '#states' => array(
       'visible' => array(
