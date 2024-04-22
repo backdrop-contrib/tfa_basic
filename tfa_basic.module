@@ -566,10 +566,12 @@ function tfa_basic_get_tfa_data($account) {
 function tfa_basic_setup_save_data($account, $data = array()) {
   // Check if existing data and update.
   $existing = tfa_basic_get_tfa_data($account);
+  $status = 1;
   if (!empty($existing['data'])) {
     $tfa_data = $existing['data'];
   }
   else {
+    $status = 0;
     $tfa_data = array(
       'plugins' => '',
       'sms' => FALSE,
@@ -585,7 +587,6 @@ function tfa_basic_setup_save_data($account, $data = array()) {
   if (isset($data['validation_skipped'])) {
     $tfa_data['validation_skipped'] = $data['validation_skipped'];
   }
-  $status = 1;
   if (isset($existing['status'])) {
     $status = $existing['status'];
   }
@@ -866,7 +867,7 @@ function tfa_basic_form_validate($form, &$form_state) {
  */
 function tfa_basic_form_submit($form, &$form_state) {
   $config = config('tfa_basic.settings');
-  if (!empty($form_state['values']['tfa_basic_validation_skip'])) {
+  if (isset($form_state['values']['tfa_basic_validation_skip'])) {
     $config->set('tfa_basic_validation_skip', $form_state['values']['tfa_basic_validation_skip']);
   }
   if (!empty($form_state['values']['tfa_basic_cookie_domain'])) {
