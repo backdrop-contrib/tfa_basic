@@ -225,14 +225,20 @@ function tfa_basic_disable_form($form, &$form_state, $account) {
     $preamble_desc = t('Are you sure you want to disable TFA on account %name?', array('%name' => $account->name));
     $notice_desc = t('TFA settings and data will be lost. %name can re-enable TFA again from their profile.', array('%name' => $account->name));
     if (tfa_basic_tfa_required($account)) {
-      backdrop_set_message(t("This account is required to have TFA enabled per the 'require TFA' permission on one of their roles. Disabling TFA will remove their ability to log back into the site. If you continue, consider also removing the role so they can authenticate and setup TFA again."), 'warning');
+      backdrop_set_message(t("This account is required to have TFA enabled per the 'require TFA' permission on one of their roles. Disabling TFA will remove their ability to log back into the site. If you continue, either consider removing the role so they can authenticate and setup TFA again, or ensure the number of times a user can 'Skip validation' is greater than 0 (see the TFA admin page)."), 'warning');
     }
   }
   else {
     $preamble_desc = t('Are you sure you want to disable your two-factor authentication setup?');
     $notice_desc = t("Your settings and data will be lost. You can re-enable two-factor authentication again from your profile.");
     if (tfa_basic_tfa_required($account)) {
-      backdrop_set_message(t('Your account must have at least one two-factor authentication method enabled. Continuing will disable your ability to log back into this site.'), 'warning');
+      $message = t('Your account must have at least one two-factor authentication method enabled.');
+      $skip_message = t('Continuing will disable your ability to log back into this site.');
+      $skip_attempts = intval(config_get('tfa_basic.settings', 'tfa_basic_validation_skip'));
+      if ($skip_attempts) {
+        $skip_message = format_plural($skip_attempts, 'You will only be able to attempt login and set it up 1 time. After this you will be unable to login.', 'You will only be able to attempt login and set it up @skip_attempts times. After this you will be unable to login.', array('@skip_attempts' => $skip_attempts));
+      }
+      backdrop_set_message($message . ' ' . $skip_message, 'warning');
       $notice_desc = t('Your settings and data will be lost and you will be unable to log back into the site. To regain access contact a site administrator.');
     }
   }
@@ -303,7 +309,7 @@ function tfa_basic_disable_form_submit($form, &$form_state) {
     return;
   }
   $params = array('account' => $account);
-  tfa_basic_setup_save_data($account, array('status' => FALSE));
+  tfa_basic_setup_save_data($account, array('status' => FALSE, 'plugins' => array()));
   // Delete TOTP code.
   $totp = new TfaTotp(array('uid' => $account->uid));
   $totp->deleteSeed();
@@ -642,7 +648,7 @@ function tfa_basic_setup_form_submit($form, &$form_state) {
       if ($form_state['storage']['sms_number'] !== tfa_basic_get_mobile_number($account)) {
         tfa_basic_set_mobile_number($account, $form_state['storage']['sms_number']);
       }
-      tfa_basic_setup_save_data($account, array('sms' => TRUE));
+      tfa_basic_setup_save_data($account, array('status' => TRUE, 'sms' => TRUE));
     }
 
     // Return if multi-step.
@@ -656,6 +662,7 @@ function tfa_basic_setup_form_submit($form, &$form_state) {
     // Log and notify if this was full setup.
     if (!empty($form_state['storage']['full_setup'])) {
       $data = array(
+        'status' => TRUE,
         'plugins' => array_diff($form_state['storage']['steps'], $form_state['storage']['steps_skipped']),
       );
       tfa_basic_setup_save_data($account, $data);

@@ -31,10 +31,11 @@ class TfaTrustedBrowser extends TfaBasePlugin implements TfaLoginPluginInterface
 
   public function __construct(array $context) {
     parent::__construct($context);
+    $config = config('tfa_basic.settings');
     $this->cookieName = settings_get('tfa_basic_cookie_name', 'TB');
-    $this->domain = config_get('tfa_basic.settings', 'tfa_basic_cookie_domain');
+    $this->domain = $config->get('tfa_basic_cookie_domain');
     // Expiration defaults to 30 days.
-    $this->expiration = config_get('tfa_basic.settings', 'tfa_basic_trust_cookie_expiration');
+    $this->expiration = $config->get('tfa_basic_trust_cookie_expiration');
   }
 
   /**
@@ -212,8 +213,9 @@ class TfaTrustedBrowserSetup extends TfaTrustedBrowser implements TfaSetupPlugin
    * @copydoc TfaSetupPluginInterface::getSetupForm()
    */
   public function getSetupForm(array $form, array &$form_state) {
+    $config = config('tfa_basic.settings');
     $existing = $this->getTrustedBrowsers();
-    $time = config_get('tfa_basic.settings', 'tfa_basic_trust_cookie_expiration') / (3600 * 24);
+    $time = $config->get('tfa_basic_trust_cookie_expiration') / (3600 * 24);
     $form['info'] = array(
       '#type' => 'markup',
       '#markup' => '<p>' . t("Trusted browsers are a method for simplifying login by avoiding verification code entry for a set amount of time, !time days from marking a browser as trusted. After !time days, to log in you'll need to enter a verification code with your username and password during which you can again mark the browser as trusted.", array('!time' => $time)) . '</p>',
@@ -253,7 +255,7 @@ class TfaTrustedBrowserSetup extends TfaTrustedBrowser implements TfaSetupPlugin
       );
       foreach ($existing as $browser) {
         $vars = array(
-          '!expiration' => format_date($browser['created'] + config_get('tfa_basic.settings', 'tfa_basic_trust_cookie_expiration')),
+          '!expiration' => format_date($browser['created'] + $config->get('tfa_basic_trust_cookie_expiration')),
           '!time' => format_date($browser['last_used']),
         );
         if ($current_trusted == $browser['id']) {
