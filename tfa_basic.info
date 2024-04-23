@@ -1,5 +1,5 @@
 name = "TFA Basic Plugins"
-description = "TFA plugins for Time-based One Time Passwords, Trusted Browsers, Recovery Codes, and Twilio SMS"
+description = "TFA plugins for Time-based One Time Passwords, Trusted Browsers, Recovery Codes, and Email"
 backdrop = 1.x
 type = module
 

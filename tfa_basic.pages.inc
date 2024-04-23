@@ -34,8 +34,6 @@ function tfa_basic_overview($form, &$form_state, $account) {
   else {
     // TOTP setup.
     $output['app'] = _tfa_basic_plugin_setup_form_overview('tfa_basic_totp', $account, $user_tfa);
-    // SMS setup.
-    $output['sms'] = _tfa_basic_plugin_setup_form_overview('tfa_basic_sms', $account, $user_tfa);
     // Email setup.
     $output['email'] = _tfa_basic_plugin_setup_form_overview('tfa_basic_email', $account, $user_tfa);
     // Trusted browsers.
@@ -88,46 +86,6 @@ function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tf
           '#suffix' => '</p>',
         ),
       );
-      break;
-
-    case 'tfa_basic_sms':
-      $output = array(
-        'heading' => array(
-          '#theme' => 'html_tag',
-          '#tag' => 'h3',
-          '#value' => t('SMS'),
-        ),
-        'description' => array(
-          '#theme' => 'html_tag',
-          '#tag' => 'p',
-          '#value' => t('Receive verification code via SMS.'),
-        ),
-      );
-      if (tfa_basic_get_twilio_client() !== FALSE) {
-        $mobile_number = tfa_basic_get_mobile_number($account);
-        if (!empty($user_tfa['data']['sms']) && $mobile_number !== FALSE) {
-          $output['number'] = array(
-            '#type' => 'markup',
-            '#markup' => '<p>' . t('Deliver to @number', array('@number' => tfa_basic_format_number($mobile_number))) . '</p>',
-          );
-        }
-        if (empty($user_tfa['data']['sms'])) {
-          $sms_text = t('Set up SMS delivery');
-        }
-        else {
-          $sms_text = t('Reset SMS delivery');
-        }
-        $output['link'] = array(
-          '#type' => 'markup',
-          '#markup' => l($sms_text, 'user/' . $account->uid . '/security/tfa/sms-setup'),
-        );
-      }
-      else {
-        $output['number'] = array(
-          '#type' => 'markup',
-          '#markup' => '<p><em>' . t('Not available for use') . '</em></p>',
-        );
-      }
       break;
 
     case 'tfa_basic_email':
@@ -448,55 +406,6 @@ function tfa_basic_setup_form($form, &$form_state, $account, $method = 'tfa_basi
         $form_state['storage'][$method] = $tfa_setup;
         break;
 
-      case 'tfa_basic_sms':
-        backdrop_set_title(t('TFA setup - SMS'));
-        // SMS itself has multiple steps. Begin with phone number entry.
-        if (empty($form_state['storage'][$method])) {
-          $default_number = tfa_basic_get_mobile_number($account);
-          $form['sms_number'] = array(
-            '#type' => 'textfield',
-            '#title' => t('Mobile phone number'),
-            '#required' => TRUE,
-            '#description' => t('Enter your mobile phone number that can receive SMS codes. A code will be sent to this number for validation.'),
-            '#default_value' => $default_number ?: '',
-          );
-          $phone_field = config_get('tfa_basic.settings', 'tfa_basic_phone_field');
-          if (!empty($phone_field)) {
-            // Report that this is an account field.
-            $field = field_info_instance('user', $phone_field, 'user');
-            $form['sms_number']['#description'] .= ' ' . t('This number is stored on your account under field %label.', array('%label' => $field['label']));
-          }
-          $form['send'] = array(
-            '#type' => 'submit',
-            '#value' => t('Send SMS'),
-          );
-          if (!empty($tfa_data['data']['sms'])) {
-            // Provide disable SMS option.
-            $form['actions']['sms_disable'] = array(
-              '#type' => 'submit',
-              '#value' => t('Disable SMS delivery'),
-              '#limit_validation_errors' => array(),
-              '#submit' => array('tfa_basic_setup_form_submit'),
-            );
-          }
-        }
-        // Then validate by sending an SMS.
-        else {
-          $number = tfa_basic_format_number($form_state['storage']['sms_number']);
-          backdrop_set_message(t("A code was sent to @number. It may take up to a minute for its arrival.", array('@number' => $number)));
-          $tfa_setup = $form_state['storage'][$method];
-          $form = $tfa_setup->getForm($form, $form_state);
-          if (isset($form_state['storage']['full_setup'])) {
-            backdrop_set_message(t("If the code does not arrive or you entered the wrong number skip this step to continue without SMS delivery. You can enable it after completing the rest of TFA setup."));
-          }
-          else {
-            $form['sms_code']['#description'] .= ' ' . l(t('If the code does not arrive or you entered the wrong number click here to start over.'), 'user/' . $account->uid . '/security/tfa/sms-setup');
-          }
-
-          $form_state['storage'][$method] = $tfa_setup;
-        }
-        break;
-
       case 'tfa_basic_email':
         backdrop_set_title(t('TFA setup - Email'));
         $setup_plugin = new TfaBasicEmailSetup($context);
@@ -571,18 +480,6 @@ function tfa_basic_setup_form_validate($form, &$form_state) {
   elseif (isset($form_state['values']['cancel']) && $form_state['values']['op'] === $form_state['values']['cancel']) {
     return;
   }
-  // Handle first step of SMS setup.
-  elseif (isset($form_state['values']['sms_number'])) {
-    // Validate number.
-    $number = $form_state['values']['sms_number'];
-    $number_errors = tfa_basic_valid_number($number);
-    if (!empty($number_errors)) {
-      foreach ($number_errors as $error) {
-        form_set_error('number', $error);
-      }
-    }
-    return;
-  }
   // Validate plugin form.
   elseif (!empty($form_state['storage']['step_method'])) {
     $method = $form_state['storage']['step_method'];
@@ -613,41 +510,8 @@ function tfa_basic_setup_form_submit($form, &$form_state) {
     $form_state['rebuild'] = TRUE;
     return;
   }
-  // Submitting mobile number step.
-  elseif (!empty($form_state['values']['sms_number'])) {
-    // Send code to number.
-    $form_state['storage']['sms_number'] = $form_state['values']['sms_number'];
-    $context = array('uid' => $account->uid, 'mobile_number' => $form_state['storage']['sms_number']);
-    $client = tfa_basic_get_twilio_client();
-    $setup_plugin = new TfaBasicSmsSetup($context, $form_state['storage']['sms_number'], $client);
-    $tfa_setup = new TfaSetup($setup_plugin, $context);
-    $tfa_setup->begin();
-    $errors = $tfa_setup->getErrorMessages();
-    if (!empty($errors)) {
-      foreach ($errors as $error) {
-        form_set_error('number', $error);
-      }
-    }
-    else {
-      // No errors so store setup.
-      $form_state['storage']['tfa_basic_sms'] = $tfa_setup;
-    }
-    $form_state['rebuild'] = TRUE;
-    return;
-  }
-  // Disabling SMS delivery.
-  if (isset($form_state['values']['sms_disable']) && $form_state['values']['op'] === $form_state['values']['sms_disable']) {
-    tfa_basic_setup_save_data($account, array('sms' => FALSE));
-    backdrop_set_message(t('TFA SMS delivery disabled.'));
-    $form_state['redirect'] = 'user/' . $account->uid . '/security/tfa';
-    watchdog('tfa_basic', 'TFA SMS disabled for user @name UID !uid', array(
-      '@name' => $account->name,
-      '!uid' => $account->uid,
-    ), WATCHDOG_INFO);
-    return;
-  }
   // Submitting a plugin form.
-  elseif (!empty($form_state['storage']['step_method'])) {
+  if (!empty($form_state['storage']['step_method'])) {
     $method = $form_state['storage']['step_method'];
     $skipped_method = FALSE;
 
@@ -671,18 +535,6 @@ function tfa_basic_setup_form_submit($form, &$form_state) {
         $form_state['redirect'] = 'user/' . $account->uid . '/security/tfa';
         return;
       }
-    }
-
-    // Save user TFA settings for relevant plugins that weren't skipped.
-    if (empty($skipped_method) && $method == 'tfa_basic_sms' &&
-      isset($form_state['storage']['sms_number']) &&
-      in_array('tfa_basic_sms', $form_state['storage']['steps'])) {
-
-      // Update mobile number if different than stored.
-      if ($form_state['storage']['sms_number'] !== tfa_basic_get_mobile_number($account)) {
-        tfa_basic_set_mobile_number($account, $form_state['storage']['sms_number']);
-      }
-      tfa_basic_setup_save_data($account, array('status' => TRUE, 'sms' => TRUE));
     }
 
     // Return if multi-step.
@@ -717,7 +569,6 @@ function _tfa_basic_full_setup_steps() {
   $steps = array();
   $plugins = array(
     'tfa_basic_totp',
-    'tfa_basic_sms',
     'tfa_basic_email',
     'tfa_basic_trusted_browser',
     'tfa_basic_recovery_code',
@@ -744,10 +595,6 @@ function _tfa_basic_set_next_step(&$form_state, $this_step, $skipped_step = FALS
     switch ($this_step) {
       case 'tfa_basic_totp':
         $output = $skipped_step ? t('Application codes not enabled.') : t('Application code verified.');
-        break;
-
-      case 'tfa_basic_sms':
-        $output = $skipped_step ? t('SMS code delivery not enabled.') : t('SMS code verified.');
         break;
 
       case 'tfa_basic_email':
@@ -784,7 +631,7 @@ function _tfa_basic_set_next_step(&$form_state, $this_step, $skipped_step = FALS
 /**
  * Output unused recovery codes.
  *
- * @param stdClass $account
+ * @param User $account
  * @return string
  */
 function tfa_basic_recovery_codes_list($account) {

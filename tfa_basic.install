@@ -191,7 +191,7 @@ function tfa_basic_update_last_removed() {
 function tfa_basic_update_1000() {
   // Migrate variables to config.
   $config = config('tfa_basic.settings');
-  $config->set('_config_translatables', array('tfa_basic_help_text', 'tfa_basic_twilio_message_text'));
+  $config->set('_config_translatables', array('tfa_basic_help_text'));
   $config->set('tfa_basic_time_skew', update_variable_get('tfa_basic_time_skew', 3));
   $config->set('tfa_basic_roles_require', update_variable_get('tfa_basic_roles_require', array()));
   $config->set('tfa_recovery_codes_amount', update_variable_get('tfa_recovery_codes_amount', 10));
@@ -200,13 +200,6 @@ function tfa_basic_update_1000() {
   $config->set('tfa_basic_name_prefix', update_variable_get('tfa_basic_name_prefix', config_get('system.core', 'site_name')));
   $config->set('tfa_basic_cookie_name', update_variable_get('tfa_basic_cookie_name', 'TB'));
   $config->set('tfa_basic_cookie_domain', update_variable_get('tfa_basic_cookie_domain', ''));
-  $config->set('tfa_basic_twilio_account_sid', update_variable_get('tfa_basic_twilio_account_sid', ''));
-  $config->set('tfa_basic_twilio_account_number', update_variable_get('tfa_basic_twilio_account_number', ''));
-  $config->set('tfa_basic_twilio_message_text', update_variable_get('tfa_basic_twilio_message_text',
-        'Verification code: !code'));
-  $config->set('tfa_basic_twilio_account_token', update_variable_get('tfa_basic_twilio_account_token', ''));
-  $config->set('tfa_basic_sms_nanp_validate', update_variable_get('tfa_basic_sms_nanp_validate', 1));
-  $config->set('tfa_basic_phone_field', update_variable_get('tfa_basic_phone_field', ''));
   $config->set('tfa_basic_help_text', update_variable_get('tfa_basic_help_text', 'Contact support to reset your access'));
   $config->save();
 
@@ -250,5 +243,25 @@ function tfa_basic_update_1002() {
   $translatables[] = 'tfa_basic_email_message_text';
   $config->set('_config_translatables', $translatables);
   $config->set('tfa_basic_email_message_text', update_variable_get('tfa_basic_email_message_text', "[user:name],\n\nYour verfication code is !code.\n\nIf you did not take this action, please contact a site administrator immediately.\n\n-- @site_name team"));
+  $config->save();
+}
+
+/**
+ * Remove Twilio and SMS functionality.
+ */
+function tfa_basic_update_1003() {
+  $config = config('tfa_basic.settings');
+  $translatables = $config->get('_config_translatables');
+  $translatables = array(
+    'tfa_basic_help_text',
+    'tfa_basic_email_message_text'
+  );
+  $config->set('_config_translatables', $translatables);
+  $config->clear('tfa_basic_twilio_account_sid');
+  $config->clear('tfa_basic_twilio_account_number');
+  $config->clear('tfa_basic_twilio_message_text');
+  $config->clear('tfa_basic_twilio_account_token');
+  $config->clear('tfa_basic_sms_nanp_validate');
+  $config->clear('tfa_basic_phone_field');
   $config->save();
 }

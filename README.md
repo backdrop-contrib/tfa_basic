@@ -19,8 +19,8 @@ https://github.com/backdrop-contrib/tfa_basic/issues/
 * Recovery Codes
  Pre-generated one-time-use codes.
 
-* Twilio SMS
- Optional plugin for sending TFA codes via SMS messages. See SMS section below.
+* Email delivery
+ Optional plugin for sending TFA codes via email.
 
 ## Variables
 
@@ -51,6 +51,9 @@ https://github.com/backdrop-contrib/tfa_basic/issues/
 * `tfa_basic_accepted_code_expiration`
  How long before accepted TOTP codes expire. Default is 1 day.
 
+* `tfa_basic_validation_skip`
+ How many times a user can skip setting up TFA before they can no longer log in. Default is 3 times.
+
 ## Using qrcode.js library instead of Google images
 
 By default the module uses Google's Chart API to create a QR code. That request
@@ -68,69 +71,6 @@ The qrcode.min.js file should be at tfa_basic/includes/qrcodejs/qrcode.min.js
 
 No additional setup is necessary, if the file exists in the right location then
 it will be used.
-
-## Using SMS for TFA codes
-
-*Currently disabled until https://www.drupal.org/project/tfa_basic/issues/2997261
-is resolved.*
-
-Prerequisites:
-
- 1. Set up a Twilio account and credit at twilio.com.
- 2. Install Twilio PHP library.
- 3. Provide account mobile phone number by:
-   a. Creating an account textfield and configuring it for TFA use, or
-   b. Implementing hook_tfa_basic_get_mobile_number_alter()
-
-### Installing Twilio PHP library
-
-TFA SMS plugin requires the Twilio PHP library for sending SMS codes. You can
-install the Twilio PHP library manually or via the Backdrop Libraries API.
-
-Option 1, install Twilio PHP manually:
-
-  cd tfa_basic/includes/
-  git clone https://github.com/twilio/twilio-php.git
-
-Such that the file tfa_basic/includes/twilio-php/Services/Twilio.php exists.
-
-Option 2, install via Backdrop Libraries API:
-
-1. Install Backdrop Libraries API: https://www.backdropcms.org/project/libraries
-2. Download the Twilio PHP library from (http://www.twilio.com/docs/libraries).
-3. Extract the library in your `/libraries` folder and rename the
-    directory to 'twilio'.
-
-### Account mobile phone numbers
-
-Accounts using SMS for TFA code delivery must have a mobile phone number able
-set. By default, TFA Basic's SMS plugin has support for storing mobile numbers
-in user account fields. Create a text field on an account and you can set its
-use by the plugin on the TFA administration configuration page.
-
-If you want to store the mobile number somewhere else you'll need to write a bit
-of code to integrate with TFA Basic.
-
-First, set the variable tfa_basic_phone_field to FALSE. This will inform TFA
-Basic that you are using custom storage.
-
-  `drush vset tfa_basic_phone_field FALSE`
-
-Finally, implement hook_tfa_basic_get_mobile_number_alter() in a custom module.
-The sole argument is an array with elements 'account' and 'number'. 'account' is
-the Backdrop user account object you can use in finding the mobile number.
-'number' will be an empty string if there's no account field in use. You should
-set the 'number' property to the mobile number you have stored.
-
-When an account is enabling SMS delivery they have the option to change the
-mobile number receiving SMS codes. If the number is changed you can implement
-hook_tfa_basic_set_mobile_number_alter() in a custom module to update your
-storage.
-
-#### Handling numbers that are not NANP
-
-* Implement `hook_tfa_basic_valid_number_alter()` for number validation
-* Implement `hook_tfa_basic_format_number_alter()` for formatting number output
 
 ## License
 
