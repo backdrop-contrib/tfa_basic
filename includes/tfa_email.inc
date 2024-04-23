@@ -2,13 +2,40 @@
 
 class TfaBasicEmail extends TfaBasePlugin implements TfaValidationPluginInterface, TfaSendPluginInterface {
 
+  /**
+   * Account
+   *
+   * @var User
+   */
   protected $account;
 
+  /**
+   * Sending Email
+   *
+   * @var string
+   */
   protected $sendingEmail;
 
+  /**
+   * Email
+   *
+   * @var string
+   */
   protected $email;
 
+  /**
+   * Message text
+   *
+   * @var string
+   */
   protected $messageText;
+
+  /**
+   * Code
+   *
+   * @var string
+   */
+  protected $code;
 
   public function __construct(array $context) {
     parent::__construct($context);
@@ -16,7 +43,7 @@ class TfaBasicEmail extends TfaBasePlugin implements TfaValidationPluginInterfac
       $this->code = $context['validate_context']['code'];
     }
 
-    $account = user_load($context['uid']);
+    $this->account = user_load($context['uid']);
     $config = config('system.core');
     $site_mail = $config->get('site_mail');
     if (empty($site_mail)) {
@@ -27,13 +54,9 @@ class TfaBasicEmail extends TfaBasePlugin implements TfaValidationPluginInterfac
     $this->codeLength = 6;
     $this->messageText = config_get_translated('tfa_basic.settings', 'tfa_basic_email_message_text');
 
-    $this->email = $account->mail;
+    $this->email = $this->account->mail;
     if (!empty($context['email'])) {
       $this->email = $context['email'];
-    }
-
-    if (!empty($context['uid'])) {
-      $this->account = user_load($context['uid']);
     }
   }
 
@@ -49,6 +72,9 @@ class TfaBasicEmail extends TfaBasePlugin implements TfaValidationPluginInterfac
     }
   }
 
+  /**
+   * {inheritdoc}
+   */
   public function getForm(array $form, array &$form_state) {
     $form['code'] = array(
       '#type' => 'number',
@@ -72,6 +98,9 @@ class TfaBasicEmail extends TfaBasePlugin implements TfaValidationPluginInterfac
     return $form;
   }
 
+  /**
+   * {inheritdoc}
+   */
   public function validateForm(array $form, array &$form_state) {
     // If operation is resend then do not attempt to validate code.
     if ($form_state['values']['op'] === $form_state['values']['resend']) {
@@ -86,6 +115,9 @@ class TfaBasicEmail extends TfaBasePlugin implements TfaValidationPluginInterfac
     }
   }
 
+  /**
+   * {inheritdoc}
+   */
   public function submitForm(array $form, array &$form_state) {
     // Resend code if pushed.
     if ($form_state['values']['op'] === $form_state['values']['resend']) {
@@ -114,6 +146,9 @@ class TfaBasicEmail extends TfaBasePlugin implements TfaValidationPluginInterfac
     );
   }
 
+  /**
+   * {inheritdoc}
+   */
   protected function generate() {
     $allowable_characters = '0123456789';
 
@@ -137,6 +172,12 @@ class TfaBasicEmail extends TfaBasePlugin implements TfaValidationPluginInterfac
     return $string;
   }
 
+  /**
+   * Get email
+   *
+   * @return string
+   *   Email address.
+   */
   protected function getEmail() {
     return $this->email;
   }
@@ -174,10 +215,13 @@ class TfaBasicEmail extends TfaBasePlugin implements TfaValidationPluginInterfac
    * {@inheritdoc}
    */
   public function ready() {
-    $tfa_data = tfa_basic_get_tfa_data($this->account);
-    // We can only send a code if there is an email.
-    if (!empty($this->email) && !empty($tfa_data['data']['email'])) {
-      return TRUE;
+    $user_data = tfa_basic_get_tfa_data($this->account);
+    // Only send a code if code delivery by email is enabled.
+    if (!empty($this->email) && !empty($user_data['data']['email'])) {
+      // We should only send codes if TFA is enabled for this account.
+      if (!empty($user_data['status'])) {
+        return TRUE;
+      }
     }
     return FALSE;
   }
@@ -193,6 +237,9 @@ class TfaBasicEmailSetup extends TfaBasicEmail implements TfaSetupPluginInterfac
     parent::__construct($context);
   }
 
+  /**
+   * {inheritdoc}
+   */
   public function begin() {
     if (empty($this->code)) {
       $this->code = $this->generate();
@@ -204,7 +251,7 @@ class TfaBasicEmailSetup extends TfaBasicEmail implements TfaSetupPluginInterfac
   }
 
   /**
-   * @copydoc TfaSetupPluginInterface::getSetupForm()
+   * {inheritdoc}
    */
   public function getSetupForm(array $form, array &$form_state) {
     $tfa_data = tfa_basic_get_tfa_data($this->account);
@@ -247,7 +294,7 @@ class TfaBasicEmailSetup extends TfaBasicEmail implements TfaSetupPluginInterfac
   }
 
   /**
-   * @copydoc TfaSetupPluginInterface::validateSetupForm()
+   * {inheritdoc}
    */
   public function validateSetupForm(array $form, array &$form_state) {
     // Verify the code.
@@ -262,7 +309,7 @@ class TfaBasicEmailSetup extends TfaBasicEmail implements TfaSetupPluginInterfac
   }
 
   /**
-   * @copydoc TfaSetupPluginInterface::submitSetupForm()
+   * {inheritdoc}
    */
   public function submitSetupForm(array $form, array &$form_state) {
     // Disable Email delivery.
