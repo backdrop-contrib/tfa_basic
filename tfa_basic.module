@@ -179,8 +179,10 @@ function tfa_basic_setup_access($account, $permission = '') {
  * Implements hook_cron().
  */
 function tfa_basic_cron() {
+  $config = config('tfa_basic.settings');
+
   // Delete trusted browser entries older than expiration.
-  $expiration = config_get('tfa_basic.settings', 'tfa_basic_trust_cookie_expiration');
+  $expiration = $config->get('tfa_basic_trust_cookie_expiration');
 
   $num_deleted = db_delete('tfa_trusted_browser')
     ->condition('created', REQUEST_TIME - $expiration, '<')
@@ -190,7 +192,7 @@ function tfa_basic_cron() {
   }
 
   // Delete accepted codes older than expiration.
-  $accepted_expiration = config_get('tfa_basic.settings', 'tfa_basic_accepted_code_expiration');
+  $accepted_expiration = $config->get('tfa_basic_accepted_code_expiration');
   db_delete('tfa_accepted_code')
     ->condition('time_accepted', REQUEST_TIME - $accepted_expiration, '<')
     ->execute();
@@ -293,8 +295,9 @@ function tfa_basic_get_twilio_client() {
   if (!class_exists('Services_Twilio')) {
     return FALSE;
   }
-  $sid = config_get('tfa_basic.settings', 'tfa_basic_twilio_account_sid');
-  $token = config_get('tfa_basic.settings', 'tfa_basic_twilio_account_token');
+  $config = config('tfa_basic.settings');
+  $sid = $config->get('tfa_basic_twilio_account_sid');
+  $token = $config->get('tfa_basic_twilio_account_token');
   return new Services_Twilio($sid, $token);
 }
 
@@ -333,7 +336,6 @@ function tfa_basic_tfa_context_alter(&$context) {
  */
 function tfa_basic_tfa_ready_require($account) {
   if (tfa_basic_tfa_required($account)) {
-    backdrop_set_message(t('Login disallowed. You are required to set up two-factor authentication. Please contact a site administrator.'), 'error');
     return TRUE;
   }
   return FALSE;
@@ -347,6 +349,10 @@ function tfa_basic_tfa_ready_require($account) {
  * @return bool
  */
 function tfa_basic_tfa_required($account) {
+  $required = &backdrop_static(__FUNCTION__);
+  if (isset($required)) {
+    return $required;
+  }
   $required = FALSE;
   $required_roles = config_get('tfa_basic.settings', 'tfa_basic_roles_require');
   if (!empty($required_roles)) {
@@ -358,6 +364,108 @@ function tfa_basic_tfa_required($account) {
     }
   }
   return $required;
+}
+
+/**
+ * Implements hook_tfa_skip_require().
+ */
+function tfa_basic_tfa_skip_require($account) {
+  if (!tfa_basic_skip_required($account)) {
+    return FALSE;
+  }
+  return TRUE;
+}
+
+/**
+ * Whether TFA requirement can be skipped for the account.
+ *
+ * @param User $account
+ *
+ * @return bool
+ */
+function tfa_basic_skip_required($account) {
+  $skipped = &backdrop_static(__FUNCTION__);
+  if (isset($skipped)) {
+    return $skipped;
+  }
+
+  $skipped = FALSE;
+
+  $remaining = tfa_basic_remaining_skips($account);
+  if ($remaining) {
+    $skipped = TRUE;
+    tfa_basic_skip_verification_message($remaining - 1, $account);
+    tfa_basic_has_skipped($account);
+  }
+  else {
+    $skipped = FALSE;
+    tfa_basic_require_verification_message();
+  }
+
+  return $skipped;
+}
+
+/**
+ * Remaining number of allowed logins without setting up TFA.
+ *
+ * @param User $account
+ * @return int|false
+ *   FALSE if users are never allowed to log in without setting up TFA.
+ *   The remaining number of times user may log in without setting up TFA.
+ */
+function tfa_basic_remaining_skips($account) {
+  $allowed_skips = intval(config_get('tfa_basic.settings', 'tfa_basic_validation_skip'));
+  // Skipping TFA setup is not allowed.
+  if (!$allowed_skips) {
+    return FALSE;
+  }
+
+  $user_tfa = tfa_basic_get_tfa_data($account);
+  $validation_skipped = isset($user_tfa['data']['validation_skipped']) ? $user_tfa['data']['validation_skipped'] : 0;
+  return max(0, $allowed_skips - $validation_skipped);
+}
+
+/**
+ * Increment the count of user logins without setting up TFA.
+ *
+ * @param User $account
+ */
+function tfa_basic_has_skipped($account) {
+  $user_tfa = tfa_basic_get_tfa_data($account);
+  $validation_skipped = isset($user_tfa['data']['validation_skipped']) ? $user_tfa['data']['validation_skipped'] : 0;
+  $new_count = $validation_skipped + 1;
+  tfa_basic_setup_save_data($account, array('validation_skipped' => $new_count));
+}
+
+/**
+ * Set the require verification message.
+ */
+function tfa_basic_require_verification_message() {
+  backdrop_set_message(t('Login disallowed. You are required to set up two-factor authentication. Please contact a site administrator.'), 'error', FALSE);
+}
+
+/**
+ * Set the skip verification message.
+ *
+ * @param int $remaining
+ */
+function tfa_basic_skip_verification_message($remaining, $account) {
+  $messages = backdrop_get_messages('error');
+  // Since the tfa_basic module sets the error message this will be set
+  // but check just in case.
+  if (isset($messages['error'])) {
+    foreach ($messages['error'] as $key => $message) {
+      if ($message != t('Login disallowed. You are required to set up two-factor authentication. Please contact a site administrator.')) {
+        // Re-add any other error messages we might have in the queue.
+        backdrop_set_message($message, 'error');
+      }
+    }
+  }
+
+  // Notify user that they are required to setup TFA.
+  $tfa_setup_link = url('user/' . $account->uid . '/security/tfa');
+  $message = format_plural($remaining, 'You are required to <a href="!link">setup two-factor authentication</a>. You have 1 attempt left. After this you will be unable to login.', 'You are required to <a href="!link">setup two-factor authentication</a>. You have @remaining attempts left. After this you will be unable to login.', array('@remaining' => $remaining, '!link' => $tfa_setup_link));
+  backdrop_set_message($message, 'warning', FALSE);
 }
 
 /**
@@ -475,6 +583,7 @@ function tfa_basic_get_tfa_data($account) {
  *   array(
  *     'plugins' => ['tfa_basic_totp'],
  *     'sms' => FALSE,
+ *     'validation_skipped' => 1,
  *     'status' => TRUE,
  *   )
  * @endcode
@@ -482,14 +591,17 @@ function tfa_basic_get_tfa_data($account) {
 function tfa_basic_setup_save_data($account, $data = array()) {
   // Check if existing data and update.
   $existing = tfa_basic_get_tfa_data($account);
+  $status = 1;
   if (!empty($existing['data'])) {
     $tfa_data = $existing['data'];
   }
   else {
+    $status = 0;
     $tfa_data = array(
       'plugins' => '',
       'sms' => FALSE,
       'email' => FALSE,
+      'validation_skipped' => 0,
     );
   }
   if (isset($data['plugins'])) {
@@ -501,10 +613,17 @@ function tfa_basic_setup_save_data($account, $data = array()) {
   if (isset($data['email'])) {
     $tfa_data['email'] = $data['email'];
   }
-  $status = 1;
-  if (isset($data['status']) && $data['status'] === FALSE) {
-    $tfa_data = array();
-    $status = 0;
+  if (isset($data['validation_skipped'])) {
+    $tfa_data['validation_skipped'] = $data['validation_skipped'];
+  }
+  if (isset($existing['status'])) {
+    $status = $existing['status'];
+  }
+  if (isset($data['status'])) {
+    $status = $data['status'];
+    if ($data['status'] === FALSE) {
+      $tfa_data = array();
+    }
   }
 
   $record = array(
@@ -594,17 +713,27 @@ function tfa_basic_format_number($number) {
 function tfa_basic_form_tfa_admin_settings_alter(&$form, &$form_state, $form_id) {
   global $cookie_domain;
   $twilio_available = FALSE;
+  $config = config('tfa_basic.settings');
+
+  $form['tfa_basic_validation_skip'] = array(
+    '#type' => 'number',
+    '#title' => t('Skip validation'),
+    '#description' => t('Number of times a user without having set up TFA validation can login.'),
+    '#default_value' => (int) $config->get('tfa_basic_validation_skip'),
+    '#min' => 0,
+    '#max' => 10,
+  );
 
   $form['required_tfa_roles'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Roles required to have set up TFA'),
     '#description' => t("Login will be denied to an account without TFA setup and any matching role."),
     '#options' => user_roles(TRUE),
-    '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_roles_require'),
+    '#default_value' => $config->get('tfa_basic_roles_require'),
   );
 
   // Add cookie domain field to TFA admin settings.
-  $tfa_basic_cookie_domain = config_get('tfa_basic.settings', 'tfa_basic_cookie_domain');
+  $tfa_basic_cookie_domain = $config->get('tfa_basic_cookie_domain');
   $form['tfa_basic_cookie_domain'] = array(
     '#type' => 'textfield',
     '#title' => t('Cookie domain'),
@@ -636,41 +765,41 @@ function tfa_basic_form_tfa_admin_settings_alter(&$form, &$form_state, $form_id)
     $form['tfa_basic_twilio_account_sid'] = array(
       '#type' => 'textfield',
       '#title' => t('Twilio account SID'),
-      '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_twilio_account_sid'),
+      '#default_value' => $config->get('tfa_basic_twilio_account_sid'),
       '#description' => t('Twilio account SID from twilio.com.'),
       '#states' => $sms_states
     );
     $form['tfa_basic_twilio_account_token'] = array(
       '#type' => 'textfield',
       '#title' => t('Twilio account token'),
-      '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_twilio_account_token'),
+      '#default_value' => $config->get('tfa_basic_twilio_account_token'),
       '#description' => t('Private Twilio account token from twilio.com.'),
       '#states' => $sms_states
     );
     $form['tfa_basic_twilio_account_number'] = array(
       '#type' => 'textfield',
       '#title' => t('Twilio account number'),
-      '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_twilio_account_number'),
+      '#default_value' => $config->get('tfa_basic_twilio_account_number'),
       '#description' => t('Private Twilio account number from twilio.com.'),
       '#states' => $sms_states
     );
     $form['tfa_basic_twilio_message_text'] = array(
       '#type' => 'textfield',
       '#title' => t('Twilio message text'),
-      '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_twilio_message_text'),
+      '#default_value' => $config->get('tfa_basic_twilio_message_text'),
       '#description' => t('Text to be sent to the user. Use !code for the verification code.'),
       '#states' => $sms_states
     );
     $form['tfa_basic_sms_nanp_validate'] = array(
       '#type' => 'checkbox',
       '#title' => t('Validate phone numbers against NANP'),
-      '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_sms_nanp_validate'),
+      '#default_value' => $config->get('tfa_basic_sms_nanp_validate'),
       '#description' => t('If enabled phone numbers will be checked against the North American Numbering Plan.'),
       '#states' => $sms_states
     );
 
     // Mobile phone storage field. Set variable to FALSE to ignore.
-    $phone_field = config_get('tfa_basic.settings', 'tfa_basic_phone_field');
+    $phone_field = $config->get('tfa_basic_phone_field');
     if ($phone_field !== FALSE) {
       $form['tfa_basic_phone_field'] = array(
         '#title' => t('SMS mobile number'),
@@ -705,7 +834,7 @@ function tfa_basic_form_tfa_admin_settings_alter(&$form, &$form_state, $form_id)
   $form['tfa_basic_help_text'] = array(
     '#type' => 'textfield',
     '#title' => t('Help page text'),
-    '#default_value' => config_get('tfa_basic.settings', 'tfa_basic_help_text'),
+    '#default_value' => $config->get('tfa_basic_help_text'),
     '#description' => t('Text to display on help page. Plain text only.'),
     '#states' => array(
       'visible' => array(
@@ -767,6 +896,9 @@ function tfa_basic_form_validate($form, &$form_state) {
  */
 function tfa_basic_form_submit($form, &$form_state) {
   $config = config('tfa_basic.settings');
+  if (isset($form_state['values']['tfa_basic_validation_skip'])) {
+    $config->set('tfa_basic_validation_skip', $form_state['values']['tfa_basic_validation_skip']);
+  }
   if (!empty($form_state['values']['tfa_basic_cookie_domain'])) {
     $config->set('tfa_basic_cookie_domain', $form_state['values']['tfa_basic_cookie_domain']);
   }

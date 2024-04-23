@@ -230,9 +230,21 @@ function tfa_basic_update_1000() {
 }
 
 /**
- * Set email message.
+ * Create skip validation variable.
  */
 function tfa_basic_update_1001() {
+  $config = config('tfa_basic.settings');
+  if ($config->get('tfa_basic_validation_skip') != NULL) {
+    return;
+  }
+  $config->set('tfa_basic_validation_skip', 3);
+  $config->save();
+}
+
+/**
+ * Set email message.
+ */
+function tfa_basic_update_1002() {
   $config = config('tfa_basic.settings');
   $translatables = $config->get('_config_translatables');
   $translatables[] = 'tfa_basic_email_message_text';
