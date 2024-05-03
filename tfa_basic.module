@@ -33,7 +33,7 @@ function tfa_basic_library_info() {
     'website' => 'https://github.com/davidshimjs/qrcodejs',
     'version' => '1.0',
     'js' => array(
-      backdrop_get_path('module', 'tfa_basic') . '/includes/qrcodejs/qrcode.min.js' => array(),
+      backdrop_get_path('module', 'tfa_basic') . '/libraries/qrcodejs/qrcode.min.js' => array(),
     ),
   );
   return $items;
