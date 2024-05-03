@@ -3,8 +3,7 @@
 Intent is to provide basic functionality of TFA Backdrop module and to be an
 example of TFA plugin development.
 
-Please use the public issue queue for all feature and support requests:
-https://github.com/backdrop-contrib/tfa_basic/issues/
+Please use the [public issue queue](https://github.com/backdrop-contrib/tfa_basic/issues/) for all feature and support requests.
 
 ## Plugins
 
@@ -54,31 +53,13 @@ https://github.com/backdrop-contrib/tfa_basic/issues/
 * `tfa_basic_validation_skip`
  How many times a user can skip setting up TFA before they can no longer log in. Default is 3 times.
 
-## Using qrcode.js library instead of Google images
-
-By default the module uses Google's Chart API to create a QR code. That request
-will leak the seed to google in the URL of an HTTP GET request which reduces
-the security of the seed. The module also supports the qrcode.js project which
-will create the QR code image without leaking information to third-party sites.
-
-To enable qrcode.js you simply have to place the library in the
-tfa_basic/includes directory. From the command line:
-
-  `cd tfa_basic/includes/`
-  `git clone https://github.com/davidshimjs/qrcodejs.git`
-
-The qrcode.min.js file should be at tfa_basic/includes/qrcodejs/qrcode.min.js
-
-No additional setup is necessary, if the file exists in the right location then
-it will be used.
-
 ## License
 
 This project is GPL v2 software. See the LICENSE.txt file in this directory for complete text.
 
 ## Current Maintainers
 
-Herb v/d Dool (https://github.com/herbdool/)
+[Herb v/d Dool](https://github.com/herbdool/)
 
 This module is currently seeking co-maintainers.
 
