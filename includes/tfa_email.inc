@@ -64,6 +64,12 @@ class TfaBasicEmail extends TfaBasePlugin implements TfaValidationPluginInterfac
    * {inheritdoc}
    */
   public function begin() {
+    $window = config_get('tfa.settings', 'tfa_flood_window');
+    if (!flood_is_allowed('tfa_email_resend', config_get('tfa.settings', 'tfa_user_threshold'), $window, $this->context['uid'])) {
+      $this->errorMessages['code'] = t('You have reached the threshold for resending the email. Please try again in !time minutes.', array('!time' => round($window / 60)));
+      return;
+    }
+
     if (!$this->code) {
       $this->code = $this->generate();
       if (!$this->sendCode($this->code)) {
@@ -102,8 +108,13 @@ class TfaBasicEmail extends TfaBasePlugin implements TfaValidationPluginInterfac
    * {inheritdoc}
    */
   public function validateForm(array $form, array &$form_state) {
-    // If operation is resend then do not attempt to validate code.
+    // If operation is resend then check if the flood limit has been reached.
     if ($form_state['values']['op'] === $form_state['values']['resend']) {
+      $window = config_get('tfa.settings', 'tfa_flood_window');
+      if (!flood_is_allowed('tfa_email_resend', config_get('tfa.settings', 'tfa_user_threshold'), $window, $this->context['uid'])) {
+        $this->errorMessages['code'] = t('You have reached the threshold for resending the email. Please try again in !time minutes.', array('!time' => round($window / 60)));
+        return FALSE;
+      }
       return TRUE;
     }
     elseif (!parent::validate($form_state['values']['code'])) {
@@ -116,11 +127,31 @@ class TfaBasicEmail extends TfaBasePlugin implements TfaValidationPluginInterfac
   }
 
   /**
+   * Check resend flood.
+   *
+   * @param int $window
+   *   Number of seconds in the time window for this event.
+   *
+   * @return bool
+   *   TRUE if resend flood was not reached, FALSE otherwise.
+   */
+  public function floodIsAllowed($window) {
+    if (!flood_is_allowed('tfa_email_resend', config_get('tfa.settings', 'tfa_user_threshold'), $window, $this->context['uid'])) {
+      $this->errorMessages['code'] = t('You have reached the threshold for resending the email. Please try again in !time minutes.', array('!time' => round($window / 60)));
+      return FALSE;
+    }
+    return TRUE;
+  }
+
+  /**
    * {inheritdoc}
    */
   public function submitForm(array $form, array &$form_state) {
     // Resend code if pushed.
     if ($form_state['values']['op'] === $form_state['values']['resend']) {
+      // Register resend event for flood protection.
+      flood_register_event('tfa_email_resend', config_get('tfa.settings', 'tfa_user_window'), $this->context['uid']);
+
       $this->code = $this->generate();
       if (!$this->sendCode($this->code)) {
         backdrop_set_message(t('Unable to email the code. Please contact support.'), 'error');
