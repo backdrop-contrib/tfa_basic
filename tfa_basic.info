@@ -4,3 +4,7 @@ backdrop = 1.x
 type = module
 
 dependencies[] = tfa (>= 1.x-2.2.0)
+
+package = User Accounts
+tags[] = Account Management
+tags[] = User Login
