@@ -11,9 +11,9 @@
 class TfaBasicTestCase extends BackdropWebTestCase {
 
   /**
-   * @var PHPGangsta_GoogleAuthenticator
+   * @var SimpleAuthenticator
    */
-  protected $ga;
+  protected $sa;
 
   /**
    * @var array
@@ -41,9 +41,9 @@ class TfaBasicTestCase extends BackdropWebTestCase {
   public function setUp() {
     // Enable TFA module and the test module.
     parent::setUp('tfa', 'tfa_basic');
-    // Use PHPGangsta_GoogleAuthenticator to create codes for TOTP seed.
-    require_once backdrop_get_path('module', 'tfa_basic') . '/includes/googleauthenticator/GoogleAuthenticator.php';
-    $this->ga = new PHPGangsta_GoogleAuthenticator();
+    // Use SimpleAuthenticator, forked from PHPGangsta_GoogleAuthenticator
+    // to create codes for TOTP seed.
+    $this->sa = new \SebastianDevs\SimpleAuthenticator(6, 'SHA1');
     $this->web_user = $this->backdropCreateUser(array('access content', 'setup own tfa'));
     $this->admin_user = $this->backdropCreateUser(array('access content', 'administer users'));
   }
@@ -110,7 +110,7 @@ class TfaBasicTestCase extends BackdropWebTestCase {
 
     // Submit valid code.
     $edit = array(
-      'code' => $this->ga->getCode($this->seed),
+      'code' => $this->sa->getCode($this->seed),
     );
     $this->backdropPost(NULL, $edit, 'Verify and save');
 
@@ -148,7 +148,7 @@ class TfaBasicTestCase extends BackdropWebTestCase {
 
     // Submit valid code.
     $edit = array(
-      'code' => $this->ga->getCode($this->seed),
+      'code' => $this->sa->getCode($this->seed),
     );
     $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Verify');
     $this->assertText('My account');
@@ -231,7 +231,7 @@ class TfaBasicTestCase extends BackdropWebTestCase {
 
     // Submit valid code.
     $code_form = array(
-      'code' => $this->ga->getCode($this->seed),
+      'code' => $this->sa->getCode($this->seed),
     );
     $this->backdropPost(NULL, $code_form, 'Verify and save');
 
@@ -246,7 +246,7 @@ class TfaBasicTestCase extends BackdropWebTestCase {
     $login_hash = array_pop($url_parts);
 
     // Submit valid code.
-    $code = $this->ga->getCode($this->seed);
+    $code = $this->sa->getCode($this->seed);
     $code_form = array(
       'code' => $code,
     );
@@ -311,7 +311,7 @@ class TfaBasicTestCase extends BackdropWebTestCase {
 
     // Submit valid code.
     $code_form = array(
-      'code' => $this->ga->getCode($this->seed),
+      'code' => $this->sa->getCode($this->seed),
     );
     $this->backdropPost(NULL, $code_form, 'Verify and save');
 

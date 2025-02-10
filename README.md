@@ -65,6 +65,6 @@ This module is currently seeking co-maintainers.
 
 ## Credits
 
-Ported to Backdrop by Herb v/d Dool (https://github.com/herbdool/)
+Ported to Backdrop by [Herb v/d Dool](https://github.com/herbdool/)
 
-This module was originally written for Drupal (https://drupal.org/project/tfa). Drupal maintainers are: [coltrane](https://www.drupal.org/u/coltrane).
+This module was originally written for [Drupal](https://drupal.org/project/tfa). Drupal maintainers are: [coltrane](https://www.drupal.org/u/coltrane).

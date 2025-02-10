@@ -53,7 +53,8 @@ function tfa_basic_autoload_info() {
     'TfaBasicEmail' => 'includes/tfa_email.inc',
     'TfaBasicEmailSetup' => 'includes/tfa_email.inc',
     'TfaBasicHelp' => 'includes/tfa_help.inc',
-    'PHPGangsta_GoogleAuthenticator' => 'includes/googleauthenticator/GoogleAuthenticator.php',
+    // Forked from https://github.com/PHPGangsta/GoogleAuthenticator
+    'SebastianDevs\SimpleAuthenticator' => 'includes/simplethenticator/SimpleAuthenticator.php',
   );
 }
 

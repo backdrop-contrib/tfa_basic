@@ -10,9 +10,9 @@
 class TfaTotp extends TfaBasePlugin implements TfaValidationPluginInterface {
 
   /**
-   * @var PHPGangsta_GoogleAuthenticator
+   * @var SimpleAuthenticator
    */
-  protected $ga;
+  protected $sa;
 
   /**
    * @var int
@@ -29,7 +29,7 @@ class TfaTotp extends TfaBasePlugin implements TfaValidationPluginInterface {
    */
   public function __construct(array $context) {
     parent::__construct($context);
-    $this->ga = new PHPGangsta_GoogleAuthenticator();
+    $this->sa = new \SebastianDevs\SimpleAuthenticator(6, 'SHA1');
     // Allow codes within tolerance range of 3 * 30 second units.
     $this->timeSkew = config_get('tfa_basic.settings', 'tfa_basic_time_skew');
     // Recommended: set variable tfa_totp_secret_key in settings.php.
@@ -97,7 +97,7 @@ class TfaTotp extends TfaBasePlugin implements TfaValidationPluginInterface {
     else {
       // Get OTP seed.
       $seed = $this->getSeed();
-      $this->isValid = ($seed && $this->ga->verifyCode($seed, $code, $this->timeSkew));
+      $this->isValid = ($seed && $this->sa->verifyCode($seed, $code, $this->timeSkew));
     }
     return $this->isValid;
   }
@@ -256,7 +256,7 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupPluginInterface {
    * @copydoc TfaBasePlugin::validate()
    */
   protected function validate($code) {
-    return $this->ga->verifyCode($this->seed, $code, $this->timeSkew);
+    return $this->sa->verifyCode($this->seed, $code, $this->timeSkew);
   }
 
   /**
@@ -274,7 +274,7 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupPluginInterface {
    * @return string Seed.
    */
   protected function createSeed() {
-    return $this->ga->createSecret(24);
+    return $this->sa->createSecret(24);
   }
 
   /**
