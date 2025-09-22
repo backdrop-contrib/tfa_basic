@@ -68,14 +68,16 @@ function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tf
     case 'tfa_basic_totp';
       $output = array(
         'heading' => array(
-          '#theme' => 'html_tag',
-          '#tag' => 'h3',
-          '#value' => t('TFA application'),
+          '#type' => 'markup',
+          '#markup' => t('TFA application'),
+          '#prefix' => '<h3>',
+          '#suffix' => '</h3>',
         ),
         'description' => array(
-          '#theme' => 'html_tag',
-          '#tag' => 'p',
-          '#value' => t('Generate verification codes from a mobile or desktop application.'),
+          '#type' => 'markup',
+          '#markup' => t('Generate verification codes from a mobile or desktop application.'),
+          '#prefix' => '<p>',
+          '#suffix' => '</p>',
         ),
         'link' => array(
           '#prefix' => '<p>',
@@ -96,9 +98,10 @@ function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tf
         $email_text = t('Reset Email delivery');
         $output = array(
           'heading' => array(
-            '#theme' => 'html_tag',
-            '#tag' => 'h3',
-            '#value' => t('Email'),
+            '#type' => 'markup',
+            '#markup' => t('Email'),
+            '#prefix' => '<h3>',
+            '#suffix' => '</h3>',
           ),
         );
         $output['email'] = array(
@@ -131,14 +134,16 @@ function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tf
       }
       $output = array(
         'heading' => array(
-          '#theme' => 'html_tag',
-          '#tag' => 'h3',
-          '#value' => t('Trusted browsers'),
+          '#type' => 'markup',
+          '#markup' => t('Trusted browsers'),
+          '#prefix' => '<h3>',
+          '#suffix' => '</h3>',
         ),
         'description' => array(
-          '#theme' => 'html_tag',
-          '#tag' => 'p',
-          '#value' => t('Browsers that will not require a verification code during login.'),
+          '#type' => 'markup',
+          '#markup' => t('Browsers that will not require a verification code during login.'),
+          '#prefix' => '<p>',
+          '#suffix' => '</p>',
         ),
       );
       if (!empty($trusted_browsers)) {
@@ -161,14 +166,16 @@ function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tf
       $recovery = new TfaBasicRecoveryCodeSetup(array('uid' => $account->uid));
       $output = array(
         'heading' => array(
-          '#theme' => 'html_tag',
-          '#tag' => 'h3',
-          '#value' => t('Recovery codes'),
+          '#type' => 'markup',
+          '#markup' => t('Recovery codes'),
+          '#prefix' => '<h3>',
+          '#suffix' => '</h3>',
         ),
         'description' => array(
-          '#theme' => 'html_tag',
-          '#tag' => 'p',
-          '#value' => t('Pre-generated, one-time-use codes intended as a fallback should other methods be unavailable.'),
+          '#type' => 'markup',
+          '#markup' => t('Pre-generated, one-time-use codes intended as a fallback should other methods be unavailable.'),
+          '#prefix' => '<p>',
+          '#suffix' => '</p>',
         ),
       );
       $recovery_codes = $recovery->getCodes();
