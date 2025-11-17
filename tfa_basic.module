@@ -127,6 +127,13 @@ function tfa_basic_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'tfa_basic.pages.inc',
   );
+  $items['user/%user/security/tfa/reset-skipped'] = array(
+    'title' => 'Reset Skipped',
+    'page callback' => 'tfa_basic_reset_skipped',
+    'page arguments' => array(1),
+    'access callback' => 'tfa_basic_setup_access',
+    'access arguments' => array(1, 'administer tfa'),
+  );
 
   return $items;
 }
@@ -350,6 +357,17 @@ function tfa_basic_has_skipped($account) {
   $validation_skipped = isset($user_tfa['data']['validation_skipped']) ? $user_tfa['data']['validation_skipped'] : 0;
   $new_count = $validation_skipped + 1;
   tfa_basic_setup_save_data($account, array('validation_skipped' => $new_count));
+}
+
+/**
+ * Reset the remaining number of validation skips allowed.
+ *
+ * @param User $account
+ */
+function tfa_basic_reset_skipped($account) {
+  tfa_basic_setup_save_data($account, array('validation_skipped' => 0));
+  backdrop_set_message(t('The remaining skips allowed when logging in has been reset.'));
+  backdrop_goto('user/' . $account->uid . '/security/tfa');
 }
 
 /**
