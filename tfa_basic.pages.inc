@@ -204,6 +204,46 @@ function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tf
       break;
 
   }
+
+  if (!$enabled) {
+    $output += array(
+      'heading_validation_skipped' => array(
+        '#type' => 'markup',
+        '#markup' => t('Skips allowed'),
+        '#prefix' => '<h3>',
+        '#suffix' => '</h3>',
+      ),
+      'validation_skipped' => array(
+        '#type' => 'markup',
+        '#markup' => t('Remaining number of allowed logins without setting up TFA: <strong>@remaining_skips</strong>', array('@remaining_skips' => tfa_basic_remaining_skips($account))),
+        '#prefix' => '<p>',
+        '#suffix' => '</p>',
+      ),
+      'reset_validation_skipped' => array(
+        '#type' => 'details',
+        '#summary' => t('Reset skips allowed (admin)'),
+        'child' => array(
+          'reset_validation_skipped_link' => array(
+            '#theme' => 'link',
+            '#path' => 'user/' . $account->uid . '/security/tfa/reset-skipped',
+            '#text' => t('Reset skips allowed'),
+            '#options' => array(
+              'attributes' => array(
+                'class' => array('button', 'button-primary'),
+              ),
+            ),
+            '#access' => user_access('administer tfa'),
+          ),
+          'reset_validation_skipped_help' => array(
+            '#type' => 'help',
+            '#markup' => t('Administers can use the link to reset the skips allowed so the person logging in has more chances to set up TFA.'),
+            '#access' => user_access('administer tfa'),
+          ),
+        ),
+      ),
+    );
+  }
+
   return $output;
 }
 
