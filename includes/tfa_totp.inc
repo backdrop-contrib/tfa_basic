@@ -198,11 +198,13 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupPluginInterface {
    */
   public function getSetupForm(array $form, array &$form_state) {
     $items = array(
-      l('Google Authenticator (Android/iPhone/BlackBerry)', 'https://support.google.com/accounts/answer/1066447?hl=en', array('attributes' => array('target'=>'_blank'))),
-      l('Authy (Android/iPhone)', 'https://www.authy.com/app/', array('attributes' => array('target'=>'_blank'))),
-      l('Authenticator (Windows Phone)', 'http://www.windowsphone.com/en-us/store/app/authenticator/021dd79f-0598-e011-986b-78e7d1fa76f8', array('attributes' => array('target'=>'_blank'))),
+      l('Google Authenticator (Android, iPhone)', 'https://support.google.com/accounts/answer/1066447?hl=en', array('attributes' => array('target'=>'_blank'))),
+      l('Password app (iPhone)', 'https://support.apple.com/en-us/120758', array('attributes' => array('target'=>'_blank'))),
       l('FreeOTP (Android)', 'https://play.google.com/store/apps/details?id=org.fedorahosted.freeotp', array('attributes' => array('target'=>'_blank'))),
-      l('GAuth Authenticator (Firefox OS, desktop, others)', 'https://github.com/gbraad/gauth', array('attributes' => array('target'=>'_blank')))
+      l('Authy (Android, iPhone)', 'https://www.authy.com', array('attributes' => array('target'=>'_blank'))),
+      l('GAuth Authenticator (desktop, mobile)', 'https://github.com/gbraad/gauth', array('attributes' => array('target'=>'_blank'))),
+      l('Bitwarden (desktop, mobile)', 'https://bitwarden.com', array('attributes' => array('target'=>'_blank'))),
+      l('KeePassX (Windows, macOS, Linux)', 'https://keepassxc.org', array('attributes' => array('target'=>'_blank'))),
     );
     $form['apps'] = array(
       '#type' => 'markup',
