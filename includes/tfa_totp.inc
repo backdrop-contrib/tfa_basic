@@ -202,24 +202,24 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupPluginInterface {
       l('Password app (iPhone)', 'https://support.apple.com/en-us/120758', array('attributes' => array('target'=>'_blank'))),
       l('FreeOTP (Android)', 'https://play.google.com/store/apps/details?id=org.fedorahosted.freeotp', array('attributes' => array('target'=>'_blank'))),
       l('Authy (Android, iPhone)', 'https://www.authy.com', array('attributes' => array('target'=>'_blank'))),
-      l('GAuth Authenticator (desktop, mobile)', 'https://github.com/gbraad/gauth', array('attributes' => array('target'=>'_blank'))),
+      l('GAuth Authenticator (desktop, mobile)', 'https://gauth.apps.gbraad.nl', array('attributes' => array('target'=>'_blank'))),
       l('Bitwarden (desktop, mobile)', 'https://bitwarden.com', array('attributes' => array('target'=>'_blank'))),
       l('KeePassX (Windows, macOS, Linux)', 'https://keepassxc.org', array('attributes' => array('target'=>'_blank'))),
     );
     $form['apps'] = array(
       '#type' => 'markup',
-      '#markup' => theme('item_list', array('items' => $items, 'title' => t('Install authentication code application on your mobile or desktop device:'))),
+      '#markup' => theme('item_list', array('items' => $items, 'title' => t('Install authentication code/password manager application on your mobile or desktop device:'))),
     );
     $form['info'] = array(
       '#type' => 'markup',
-      '#markup' => t('<p>The two-factor authentication application will be used during this setup and for generating codes during regular authentication. If the application supports it, scan the QR code below to get the setup code otherwise you can manually enter the text code.</p>'),
+      '#markup' => t('<p>The two-factor authentication/password manager application will be used during this setup and for generating codes during regular authentication. If the application supports it, scan the QR code below to get the setup code otherwise you can manually enter the text code.</p>'),
     );
     $form['seed'] = array(
       '#type' => 'textfield',
       '#value' => $this->seed,
       '#disabled' => TRUE,
       '#allow_focus' => TRUE,
-      '#description' => t('Enter this code into your two-factor authentication app or scan the QR code below.'),
+      '#description' => t('Enter this code into your two-factor authentication/password manager app or scan the QR code below.'),
     );
     // QR image of seed.
     $form['qr_image_wrapper']['qr_image'] = array(
