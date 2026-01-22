@@ -222,6 +222,7 @@ function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tf
       'reset_validation_skipped' => array(
         '#type' => 'details',
         '#summary' => t('Reset skips allowed (admin)'),
+        '#access' => user_access('administer tfa'),
         'child' => array(
           'reset_validation_skipped_link' => array(
             '#theme' => 'link',
