@@ -29,6 +29,14 @@ function tfa_basic_overview($form, &$form_state, $account) {
   // Start with validate plugin setup.
   if (!$enabled) {
     $validate_plugin = config_get('tfa.settings', 'tfa_validate_plugin');
+    // Allow altering of the validate plugin based on context.
+    $context = array(
+      'account' => $account,
+      'user_tfa' => $user_tfa,
+      'form' => $form,
+      'form_state' => $form_state,
+    );
+    backdrop_alter('tfa_basic_validate_plugin', $validate_plugin, $context);
     $output['setup'] = _tfa_basic_plugin_setup_form_overview($validate_plugin, $account, $user_tfa);
   }
   else {
