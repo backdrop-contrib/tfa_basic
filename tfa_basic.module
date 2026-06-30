@@ -299,6 +299,13 @@ function tfa_basic_tfa_skip_require($account) {
 }
 
 /**
+ * Implements hook_tfa_login_denied().
+ */
+function tfa_basic_tfa_login_denied($account) {
+  tfa_basic_require_verification_message();
+}
+
+/**
  * Whether TFA requirement can be skipped for the account.
  *
  * @param User $account
@@ -321,7 +328,6 @@ function tfa_basic_skip_required($account) {
   }
   else {
     $skipped = FALSE;
-    tfa_basic_require_verification_message();
   }
 
   return $skipped;
