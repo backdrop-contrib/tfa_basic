@@ -222,7 +222,7 @@ function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tf
       'reset_validation_skipped' => array(
         '#type' => 'details',
         '#summary' => t('Reset skips allowed (admin)'),
-        '#access' => user_access('administer tfa'),
+        '#access' => user_access('admin tfa settings'),
         'child' => array(
           'reset_validation_skipped_link' => array(
             '#theme' => 'link',
@@ -233,12 +233,12 @@ function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tf
                 'class' => array('button', 'button-primary'),
               ),
             ),
-            '#access' => user_access('administer tfa'),
+            '#access' => user_access('admin tfa settings'),
           ),
           'reset_validation_skipped_help' => array(
             '#type' => 'help',
             '#markup' => t('Administers can use the link to reset the skips allowed so the person logging in has more chances to set up TFA.'),
-            '#access' => user_access('administer tfa'),
+            '#access' => user_access('admin tfa settings'),
           ),
         ),
       ),
