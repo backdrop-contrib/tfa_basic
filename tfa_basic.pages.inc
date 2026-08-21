@@ -223,23 +223,21 @@ function _tfa_basic_plugin_setup_form_overview($plugin, $account, array $user_tf
         '#type' => 'details',
         '#summary' => t('Reset skips allowed (admin)'),
         '#access' => user_access('administer tfa'),
-        'child' => array(
-          'reset_validation_skipped_link' => array(
-            '#theme' => 'link',
-            '#path' => 'user/' . $account->uid . '/security/tfa/reset-skipped',
-            '#text' => t('Reset skips allowed'),
-            '#options' => array(
-              'attributes' => array(
-                'class' => array('button', 'button-primary'),
-              ),
+        'reset_validation_skipped_link' => array(
+          '#theme' => 'link',
+          '#path' => 'user/' . $account->uid . '/security/tfa/reset-skipped',
+          '#text' => t('Reset skips allowed'),
+          '#options' => array(
+            'attributes' => array(
+              'class' => array('button', 'button-primary'),
             ),
-            '#access' => user_access('administer tfa'),
           ),
-          'reset_validation_skipped_help' => array(
-            '#type' => 'help',
-            '#markup' => t('Administers can use the link to reset the skips allowed so the person logging in has more chances to set up TFA.'),
-            '#access' => user_access('administer tfa'),
-          ),
+          '#access' => user_access('administer tfa'),
+        ),
+        'reset_validation_skipped_help' => array(
+          '#type' => 'help',
+          '#markup' => t('Administers can use the link to reset the skips allowed so the person logging in has more chances to set up TFA.'),
+          '#access' => user_access('administer tfa'),
         ),
       ),
     );
